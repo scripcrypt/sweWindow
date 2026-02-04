@@ -19,8 +19,7 @@ index.html と、test-sweWindow.js を見て戴ければ大体の使い方は分
 <br><br>
 
 ## 2. 基本構成
-## ✅ sweWindow.js と sweWindow.css を読み込んでください。
-## ファイルはそれだけです。
+### ✅ sweWindow.js と sweWindow.css を読み込んでください。ファイルはそれだけです。
 見た目を変えたい方は sweWindow.css を書き換えて下さい。
 - .sweScreen 要素の中に、.sweWindow を並べて初期化すると、.sweScreen を枠として、.sweWindow 一つずつがウィンドウになります。
 - .sweScreen は複数置く事が出来ます。更に多段式（ウィンドウの中にスクリーンを設ける事）も出来ます。
