@@ -1,21 +1,23 @@
-<html lang="en"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
-	<link rel="stylesheet" href="sweWindow.css">
-	<script defer="" src="sweWindow.js"></script>
-	<script defer="" src="test-sweWindow.js"></script>
+	<link rel="stylesheet" href="src/sweWindow.css">
+	<script defer src="src/sweWindow.js"></script>
+	<script defer src="sample/test-sweWindow.js"></script>
 	<title>SWE-Window</title>
 </head>
 <body>
 	<div id="screen-ctrl" style="margin-left: 5px;">
 		<button id="screenResize">Resize</button>
 		<button id="showWinById">show winById</button>
-		<button id="focus" target="xxx" ,="" action="focus">focus</button>
-		<button id="maximize" target="xxx" ,="" action="maximize">maximize</button>
-		<button id="minimize" target="xxx" ,="" action="minimize">minimize</button>
-		<button id="close" target="xxx" ,="" action="close">close</button>
-		<button id="newwwindow7" target="xxx" ,="" action="close">new window 7</button>
+		<button id="focus" target='xxx', action="focus">focus</button>
+		<button id="maximize" target='xxx', action="maximize">maximize</button>
+		<button id="minimize" target='xxx', action="minimize">minimize</button>
+		<button id="close" target='xxx', action="close">close</button>
+		<button id="newwwindow7" target='xxx', action="close">new window 7</button>
 		<br>
 		<input id="windowId" style="width:150px;">
 		<button action="windowFocus">focus</button>
@@ -24,80 +26,60 @@
 		<button action="windowclose">close</button>
 		<button action="newwindow15">new window 15</button>
 	</div>
-	<div id="screen" class="sweScreen" style="--taskbar-height: 34px;">
+	<div id="screen" class="sweScreen">
 
-	<div class="sweTaskbar"><button class="sweTaskButton" type="fact">野球も変わりつつあるよね</button><button class="sweTaskButton" type="html">横長のウィンドウってことぉ〜</button><button class="sweTaskButton" type="article">AMDが“高コスパ”のプロ向けGPU「Radeon PRO W7700」を発表　実力をチェック！</button><button class="sweTaskButton" type="info">[Hyprland] Chatgpt helped me make a thing!</button><button class="sweTaskButton" type="data">日本のトイレはきれいで良かったよぉ</button><button class="sweTaskButton active" type="article">PHP 8.5 が出たので、パイプライン演算子を使ってログ整形ツールを書いてみた</button></div><div class="sweWindowFrame" window-type="fact" window-id="win-d87bf919-f5cb-4214-b0ab-74c52578b3ca" style="z-index: 0; height: 727px; width: 712px; top: 400px; left: 20px;"><div class="sweWindowHeader"><div class="sweWindowHeaderTitle">野球も変わりつつあるよね</div><div class="sweWindowHeaderButtons"><button class="minimize"></button><button class="maximize"></button><button class="close"></button></div></div><div class="sweWindow" style="height: 690px;">
-	<h3>侍ジャパン、韓国下しアジアＣＳ連覇！　門脇が延長十回にサヨナラ打</h3>
-	<div class="center"><img src="baseballjapan.png"></div>
-	<pre style="height: 200px;">アジアプロ野球チャンピオンシップ決勝（１９日、日本４ｘ－３韓国、東京Ｄ）野球日本代表「侍ジャパン」が延長十回タイブレークの末、韓国に逆転サヨナラ勝ちし、２０１７年の第１回大会に続く連覇を果たした。
+		<div window-title="野球も変わりつつあるよね" top=400 left=20 height=680 width=700  type="fact" class="sweWindow">
+			<h3>侍ジャパン、韓国下しアジアＣＳ連覇！　門脇が延長十回にサヨナラ打</h3>
+			<div class="center"><img src="img/baseballjapan.png"></div>
+			<pre style="height: 200px;">アジアプロ野球チャンピオンシップ決勝（１９日、日本４ｘ－３韓国、東京Ｄ）野球日本代表「侍ジャパン」が延長十回タイブレークの末、韓国に逆転サヨナラ勝ちし、２０１７年の第１回大会に続く連覇を果たした。
 
-		侍ジャパンは大会初登板の先発・今井（西武）が三回に４番・盧施ファンに先制の２点二塁打を許したが、五回に４番・牧（ＤｅＮＡ）が左越えにソロ本塁打を放って１点差に詰め寄った。そして六回は１死三塁から８番・佐藤輝（阪神）の中犠飛で同点に追いついた。五回から登板した２番手根本（日本ハム）が３回を１安打無失点に抑えて流れを呼び込んだ。
-		
-		２－２の延長十回から無死一、二塁でスタートするタイブレークに突入。１点を勝ち越されたその裏、代打・古賀（西武）の犠打と牧の申告敬遠で１死満塁としたあと、坂倉（広島）の中犠飛でまず同点に追いついた。さらに万波（日本ハム）の申告敬遠で２死満塁とし、門脇（巨人）が左前打を放ち勝負を決めた。</pre>
-</div><div class="sweWindow_resize_leftTop"></div><div class="sweWindow_resize_top"></div><div class="sweWindow_resize_topRight"></div><div class="sweWindow_resize_right"></div><div class="sweWindow_resize_rightBottom"></div><div class="sweWindow_resize_bottom"></div><div class="sweWindow_resize_bottomLeft"></div><div class="sweWindow_resize_left"></div></div><div class="sweWindowFrame" window-type="html" window-id="win-68cf704b-b1aa-4160-ad72-a0db7956c620" style="z-index: 1; height: 247px; width: 623px; top: 50px; left: 250px;"><div class="sweWindowHeader"><div class="sweWindowHeaderTitle">横長のウィンドウってことぉ〜</div><div class="sweWindowHeaderButtons"><button class="minimize"></button><button class="maximize"></button><button class="close"></button></div></div><div class="sweWindow" style="height: 210px;">
-	<div class="row">
-		<img src="QNAP.jpg" width="250px">
-		<pre>レンズ交換式デジタルカメラや高倍率ズームレンズ付きのビデオカメラは、撮影時の画質や解像度が高い傾向にある。写真や動画をたくさん保存すると、カメラのメモリカードはあっという間にいっぱいになる。ゆえに、データ（ファイル）の定期的なバックアップは欠かせない。</pre>
+				侍ジャパンは大会初登板の先発・今井（西武）が三回に４番・盧施ファンに先制の２点二塁打を許したが、五回に４番・牧（ＤｅＮＡ）が左越えにソロ本塁打を放って１点差に詰め寄った。そして六回は１死三塁から８番・佐藤輝（阪神）の中犠飛で同点に追いついた。五回から登板した２番手根本（日本ハム）が３回を１安打無失点に抑えて流れを呼び込んだ。
+				
+				２－２の延長十回から無死一、二塁でスタートするタイブレークに突入。１点を勝ち越されたその裏、代打・古賀（西武）の犠打と牧の申告敬遠で１死満塁としたあと、坂倉（広島）の中犠飛でまず同点に追いついた。さらに万波（日本ハム）の申告敬遠で２死満塁とし、門脇（巨人）が左前打を放ち勝負を決めた。</pre>
+		</div>
+
+		<div window-title="横長のウィンドウってことぉ〜" top=50 left=250 height=200 width=611 url="sample/window_content_2.html" class="sweWindow"></div>
+
+		<div window-title="日本のトイレはきれいで良かったよぉ" height=640 width=722 top=100 left=900  type="data" window-id="xxx" url="sample/window_content_3.html" class="sweWindow"></div>
+
+		<div window-title="AMDが“高コスパ”のプロ向けGPU「Radeon PRO W7700」を発表　実力をチェック！" width=700 height=300 type="article" class="sweWindow">
+			<h3>AMDが“高コスパ”のプロ向けGPU「Radeon PRO W7700」を発表　実力をチェック！</h3>
+			<div class="row">
+				<div class="center"><img src="img/radeon.jpg" width="200px"></div>
+				<pre>AMDは11月13日（米国太平洋時間）、デスクトップワークステーション向けGPU「Radeon PRO W7700」を発表した。本GPUを搭載するグラフィックスカードは同日から発売される他、カードをあらかじめ組み込んだワークステーションも11月中から順次登場する予定だ。グラフィックスカードの想定販売価格は999ドル（約15万1400円）となる。</pre>
+			</div>
+		</div>
+
+		<div window-title="[Hyprland] Chatgpt helped me make a thing!" focus=true width=800 height=650 type="info" class="sweWindow">
+			<h3>Hyprland 0.52 out now!</h3>
+			<div class="column">
+				<div class="center"><img src="img/hyprland.webp" width="700px"></div>
+				<pre>Hi fam, another Hyprland update time! There hasn’t been an update in a while, but we back.
+
+		Work is also focused a bit on improving our new hyprtoolkit which will power all hyprland gui apps in the future.
+
+		Anyways, hyprland.
+
+		Breaking changes
+		misc:disable_hyprland_qtutils_check has been moved to misc:disable_hyprland_guiutils_check to reflect qtutils being now archived in favor of guiutils.
+
+		New stuff
+		Tons of new stuff dropped:
+
+		you can now mark submaps as automatically closing after a keybind has been executed
+		new dispatcher: forceidle
+		fullscreen now has set, unset and toggle for less IPC queries
+		new CM options: dcip3, dp3 and adobe
+		you can now set rotation for each input device that supports it
+		noscreenshare now also available as a layerrule
+		cursor:zoom_disable_aa for controlling whether you want a pixelated or blurry look when zooming into your cursor
+		new modal prop for windowrules
+		and much more!</pre>
+			</div>
+		</div>
+
+		<div window-title="PHP 8.5 が出たので、パイプライン演算子を使ってログ整形ツールを書いてみた"  width=1000 height=600 type="article" window-id="php8.5" url="sample/window_content_6.html" class="sweWindow"></div>
 	</div>
-</div><div class="sweWindow_resize_leftTop"></div><div class="sweWindow_resize_top"></div><div class="sweWindow_resize_topRight"></div><div class="sweWindow_resize_right"></div><div class="sweWindow_resize_rightBottom"></div><div class="sweWindow_resize_bottom"></div><div class="sweWindow_resize_bottomLeft"></div><div class="sweWindow_resize_left"></div></div><div class="sweWindowFrame" window-type="data" window-id="xxx" style="z-index: 2; height: 687px; width: 734px; top: 100px; left: 900px;"><div class="sweWindowHeader"><div class="sweWindowHeaderTitle">日本のトイレはきれいで良かったよぉ</div><div class="sweWindowHeaderButtons"><button class="minimize"></button><button class="maximize"></button><button class="close"></button></div></div><div class="sweWindow" style="height: 650px;"><div class="column">
-	<div class="center"><img src="airplane.png"></div>
-	<pre>【ロサンゼルス１２日（日本時間１３日）＝丹羽政善通信員】米大リーグ、ドジャースの大谷翔平投手（２９）が本拠地で行われたパドレス戦の一回に４号ソロ本塁打を放ち、松井秀喜の日本選手最多に並ぶメジャー通算１７５号をマークした。憧れの存在に並び「日本の野球界にとっても大きなことだと思う」と語った。五回の二塁打で日米通算１０００安打にも到達。銀行詐欺容疑で訴追された元通訳の水原一平容疑者（３９）が裁判所に出廷した日の試合で、節目の本塁打を放った。
-
-		本拠地ドジャースタジアムの左中間へ、品のある優雅な放物線を描いた。一回１死。右腕キングの外角高め、見送ればボールの１５３キロの直球を振り抜いた。４万９６０６人の観衆は総立ち。大谷は右手人さし指を突き立て、ダイヤモンドを回った。
-		
-		「個人的にもうれしいけど、日本の野球界にとっても大きいことじゃないかなと思う。プレートから外れている難しい球を本塁打にできているのは、基本的にはいいスイングの軌道だなと思う」
-		
-		
-		
-		飛距離４０３フィート（１２３メートル）、打球速度１０７・３マイル（１７３キロ）。３試合ぶりの４号ソロで少年時代からの「憧れ」に追い付いた。メジャー通算１７５号とし、ヤンキースなどで活躍した松井秀喜の日本選手最多に並んだ。１０年、４９７０打席かかった松井氏の数字に７年、２９４１打席でたどり着き「小さい頃からずっと見てきた。同じ左打者として憧れている存在。そういう方に記録で並べたのは、自分にとって幸せなこと」。ドジャースに在籍した日本選手の通算最多本塁打でも野茂英雄の４本に並んだ。</pre>
-</div></div><div class="sweWindow_resize_leftTop"></div><div class="sweWindow_resize_top"></div><div class="sweWindow_resize_topRight"></div><div class="sweWindow_resize_right"></div><div class="sweWindow_resize_rightBottom"></div><div class="sweWindow_resize_bottom"></div><div class="sweWindow_resize_bottomLeft"></div><div class="sweWindow_resize_left"></div></div><div class="sweWindowFrame" window-type="article" window-id="win-2ac20bb6-a131-45d3-85f6-3122e1575d94" style="z-index: 3; height: 347px; width: 712px; top: 130px; left: 130px;"><div class="sweWindowHeader"><div class="sweWindowHeaderTitle">AMDが“高コスパ”のプロ向けGPU「Radeon PRO W7700」を発表　実力をチェック！</div><div class="sweWindowHeaderButtons"><button class="minimize"></button><button class="maximize"></button><button class="close"></button></div></div><div class="sweWindow" style="height: 310px;">
-	<h3>AMDが“高コスパ”のプロ向けGPU「Radeon PRO W7700」を発表　実力をチェック！</h3>
-	<div class="row">
-		<div class="center"><img src="radeon.jpg" width="200px"></div>
-		<pre>AMDは11月13日（米国太平洋時間）、デスクトップワークステーション向けGPU「Radeon PRO W7700」を発表した。本GPUを搭載するグラフィックスカードは同日から発売される他、カードをあらかじめ組み込んだワークステーションも11月中から順次登場する予定だ。グラフィックスカードの想定販売価格は999ドル（約15万1400円）となる。</pre>
-	</div>
-</div><div class="sweWindow_resize_leftTop"></div><div class="sweWindow_resize_top"></div><div class="sweWindow_resize_topRight"></div><div class="sweWindow_resize_right"></div><div class="sweWindow_resize_rightBottom"></div><div class="sweWindow_resize_bottom"></div><div class="sweWindow_resize_bottomLeft"></div><div class="sweWindow_resize_left"></div></div><div class="sweWindowFrame" window-type="info" window-id="win-4b3fb727-4018-4256-b912-8af8636fbc9c" style="z-index: 4; height: 697px; width: 812px; top: 180px; left: 180px;"><div class="sweWindowHeader"><div class="sweWindowHeaderTitle">[Hyprland] Chatgpt helped me make a thing!</div><div class="sweWindowHeaderButtons"><button class="minimize"></button><button class="maximize"></button><button class="close"></button></div></div><div focus="true" class="sweWindow" style="height: 660px;">
-	<h3>Hyprland 0.52 out now!</h3>
-	<div class="column">
-		<div class="center"><img src="hyprland.webp" width="700px"></div>
-		<pre>Hi fam, another Hyprland update time! There hasn’t been an update in a while, but we back.
-
-Work is also focused a bit on improving our new hyprtoolkit which will power all hyprland gui apps in the future.
-
-Anyways, hyprland.
-
-Breaking changes
-misc:disable_hyprland_qtutils_check has been moved to misc:disable_hyprland_guiutils_check to reflect qtutils being now archived in favor of guiutils.
-
-New stuff
-Tons of new stuff dropped:
-
-you can now mark submaps as automatically closing after a keybind has been executed
-new dispatcher: forceidle
-fullscreen now has set, unset and toggle for less IPC queries
-new CM options: dcip3, dp3 and adobe
-you can now set rotation for each input device that supports it
-noscreenshare now also available as a layerrule
-cursor:zoom_disable_aa for controlling whether you want a pixelated or blurry look when zooming into your cursor
-new modal prop for windowrules
-and much more!</pre>
-	</div>
-</div><div class="sweWindow_resize_leftTop"></div><div class="sweWindow_resize_top"></div><div class="sweWindow_resize_topRight"></div><div class="sweWindow_resize_right"></div><div class="sweWindow_resize_rightBottom"></div><div class="sweWindow_resize_bottom"></div><div class="sweWindow_resize_bottomLeft"></div><div class="sweWindow_resize_left"></div></div><div class="sweWindowFrame active" window-type="article" window-id="php8.5" style="z-index: 5; height: 647px; width: 1012px; top: 230px; left: 230px;"><div class="sweWindowHeader"><div class="sweWindowHeaderTitle">PHP 8.5 が出たので、パイプライン演算子を使ってログ整形ツールを書いてみた</div><div class="sweWindowHeaderButtons"><button class="minimize"></button><button class="maximize"></button><button class="close"></button></div></div><div class="sweWindow" style="height: 610px;"><div>
-		<div class="center"><img src="php.jpg"></div>
-		<pre>今回は新しい取り組みとして、はてなブログでエンジニアっぽいことを書きます。
-ソースコードとか書かれていて、エンジニアじゃない方にはよくわからない内容になってるかと思うのでご了承くださいください。。🙇‍♂️
-( 今までずっとポエムを書いていたので、違和感すごいと思います )
-
-ということで、本題です。
-
-PHP 8.5 が出ましたね！
-
-実はわたし、一応 PHPer です。
-
-今回のアップグレードの目玉機能である パイプライン演算子に興味があったので、使ってみることにします。
-本ブログでは、文字列操作が必要な "ログ整形 CLI ツール" を作ります。</pre>
-	</div>
-</div><div class="sweWindow_resize_leftTop"></div><div class="sweWindow_resize_top"></div><div class="sweWindow_resize_topRight"></div><div class="sweWindow_resize_right"></div><div class="sweWindow_resize_rightBottom"></div><div class="sweWindow_resize_bottom"></div><div class="sweWindow_resize_bottomLeft"></div><div class="sweWindow_resize_left"></div></div></div>
 	<script>
 		window.addEventListener('load', function () {
 
@@ -105,13 +87,11 @@ PHP 8.5 が出ましたね！
 
 			if (screens.length > 0) {
 				screens.forEach(ssr => {
-					console.log("ssr", ssr);
 					ssr.sweScreens = new sweScreen(ssr, { onFocus: focusWindow });
 				});
 			}
 
 		});
 	</script>
-
- 
-</body></html>
+</body>
+</html> 

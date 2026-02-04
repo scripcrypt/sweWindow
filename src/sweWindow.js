@@ -39,6 +39,7 @@ class sweScreen {
 	--------------------------------------------------*/
 	constructor(screen = null, config = null) {
 
+					console.log("sweScreen", screen);
 		this.scNode = typeof screen === "string"
 			? document.querySelector(screen)
 			: (screen === null ? document.body : screen);

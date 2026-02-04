@@ -2,28 +2,20 @@
 ## 1.概要
 sweWindowは、Vanilla JSで動作するブラウザ上で使えるウィンドウ・マネージャです。
 
-![Screen capture](sweWindow-screenShot2.png)
+![Screen capture](img/sweWindow-screenShot2.png)
 
-## 基本中の基本
-<blockquote>
-  <h2>本システムは <code>sweWindow.js</code> と <code>sweWindow.css</code> だけです。</h2>
-</blockquote>
-<br>
+### 基本中の基本
+#### 本システムは <code>sweWindow.js</code> と <code>sweWindow.css</code> だけです。
 基本的にWindowsやMacと同じようなウィンドウ機能です。<br>
 ウィンドウヘッダーをドラッグして移動でき、各辺と各角をドラッグしてリサイズ出来ます。<br>
 ウィンドウの右上にはボタンが３つあり、黄色：最小化、緑：最大化、赤：閉じるとなっています。<br>
 ヘッダーのダブルクリックで最大化↔戻るとなります。これは緑の最大化ボタンを押した時と一緒です。<br>
 最小化してもしなくてもタスクバーにはウィンドウのボタンが表示されており、タスクバーとウィンドウは１：１の関係です。<br>
 タスクバーのボタンを押すと、ウィンドウが前面で出て来ます。既に前面にある場合には最小化されます。<br>
-最小化（タスクバーに内包され非表示）されているウィンドウは、タスクバーのボタンを押すと、元に戻ります（元の状態が最大化されていれば最大化）。<br><br>
-<blockquote>
-  <h2 style="color: red;">❗重要</h2>
-  <div style="font-size: 1.2em; font-weight: bold;">
-    index.html と、test-sweWindow.js を見て戴ければ大体の使い方は分かると思います。<br>
-		また、sweWindow.css ではある程度変数化してますので、お気楽に見た目の変更をして下さい。
-  </div>
-</blockquote>
+最小化（タスクバーに内包され非表示）されているウィンドウは、タスクバーのボタンを押すと、元に戻ります（元の状態が最大化されていれば最大化）。
 
+index.html と、test-sweWindow.js を見て戴ければ大体の使い方は分かると思います。<br>
+また、sweWindow.css ではある程度変数化してますので、お気楽に見た目の変更をして下さい。
 <br><br>
 
 ## 2. 基本構成
@@ -55,6 +47,7 @@ sweWindowは、Vanilla JSで動作するブラウザ上で使えるウィンド�
 |---------|------|------|
 | **sweScreen** | 要素の .sweScreen がインスタンス | .スクリーン・ウィンドウ管理クラス、外部からはこのクラス・インスタンスを操作する　|
 | **sweWindow** | 要素の .sweWindow がインスタンス | ウィンドウ毎のクラスインスタンス |
+<br>
 
 
 ### DOM構造
@@ -73,7 +66,7 @@ sweWindowは、Vanilla JSで動作するブラウザ上で使えるウィンド�
   <div class="sweWindowContent"></div>
 </div>
 ```
-<br><br>
+<br>
 
 ## 3. 使用方法
 ### 3.1 起動
@@ -103,21 +96,21 @@ new sweScreen(screen);
     <div window-id="php8.5" window-title="PHP 8.5 が出るという事のようです" width="1000" height="600" type="article" url="window_content_6.html" class="sweWindow"></div>	
 </div>
 ```
-```text
+
 クラスにそれぞれ .sweScreen, .swdWindow が入っていれば自動生成します。（idはノートを利用する為に付けただけで本システムとは関係ありません。）<br>
 スクリーン要素を引数にしてスクリーン生成する場合は、.sweScreen は必要ありません。
-```
-> ❗ **Important**
-> - 現状ではインスタンス化時に複数のスクリーンを変換する機能を有していません。
-> - ".scrren" みたいな形で指定して、コード上に .scrren 要素が複数あった場合には、最初の .scrren だけがスクリーン化されます。
-> - 省略すると `<body>` をスクリーンとします。
+
+#### ❗ **Important**
+- 現状ではインスタンス化時に複数のスクリーンを変換する機能を有していません。
+- ".scrren" みたいな形で指定して、コード上に .scrren 要素が複数あった場合には、最初の .scrren だけがスクリーン化されます。
+- 省略すると `<body>` をスクリーンとします。
 
 起動すると、スクリーン要素内の .sweWindow 要素を探して全てウィンドウ化します。<br><br>
 
 ### 3.2 ウィンドウの設定
 各ウィンドウの初期設定は、.sweWindow要素の属性として設定する仕様となっています。.sweWindow要素の中身はウィンドウ内のコンテンツをそのまま記してください。
 
-### 🔸window-id: web-Bgs7Sha
+### 🔸window-id: 任意の文字列
 このウィンドウを外部からも操作したい場合に、ウィンドウを特定する為に用いるIDです。
 
 ### 🔸window-title: ウィンドウのタイトル文
