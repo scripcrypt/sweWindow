@@ -1,6 +1,8 @@
 # sweWindow
 ## 1.概要
-sweWindowは、Vanilla JSで動作するブラウザ上で使えるウィンドウ・マネージャです。
+sweWindowは、Vanilla JSで動作するブラウザ上で使えるウィンドウ・マネージャです。<br>
+👉 [サンプル (sample)](https://scripcrypt.github.io/sweWindow/)
+<br>
 
 ![Screen capture](img/sweWindow-screenShot2.png)
 
