@@ -147,9 +147,10 @@ pre {
    Frame
 ============================================================ */
 .sweWindowFrame {
+	position: absolute;
 	display: flex;
 	flex-direction: column;
-	position: absolute;
+	box-sizing: border-box;
 	border-radius: var(--sweWindow-border-radius);
 	border: var(--sweWindow-border);
 	background-color: var(--sweWindow-background-color);
@@ -160,10 +161,10 @@ pre {
 	filter: contrast(75%) brightness(85%);
 	z-index: 0;
 	transition:
-		top 0.25s ease,
-		left 0.25s ease,
-		width 0.25s ease,
-		height 0.25s ease;
+		top 0.1s ease,
+		left 0.1s ease,
+		width 0.1s ease,
+		height 0.1s ease;
 }
 .sweWindowFrame.active {
 	filter: none;
@@ -214,7 +215,7 @@ pre {
 	}
 }
 .sweWindowFrame.maximizeAnim {
-	animation: swe-maximize 0.25s ease forwards;
+	animation: swe-maximize 0.1s ease forwards;
 }
 .sweWindowFrame.minimize {
 	display: none;
@@ -230,7 +231,7 @@ pre {
 	}
 }
 .sweWindowFrame.minimizeAnim {
-	animation: swe-minimize 0.25s ease forwards;
+	animation: swe-minimize 0.1s ease forwards;
 	pointer-events: none;
 }
 @keyframes swe-restore {
@@ -244,7 +245,7 @@ pre {
 	}
 }
 .sweWindowFrame.restoreAnim {
-	animation: swe-restore 0.25s ease forwards;
+	animation: swe-restore 0.1s ease forwards;
 }
 .sweWindowFrame.closing {
 	transition:
@@ -266,15 +267,14 @@ pre {
    Window
 ============================================================ */
 .sweWindow {
-	display: block;
-	height: auto;
+	flex-grow: 1;
+	/* 親の余った高さを埋める */
 	width: 100%;
-	visibility: hidden;
-	background-color: transparent;
+	overflow: auto;
+	box-sizing: border-box;
+	overflow: auto;
 	box-sizing: border-box;
 	padding: var(--sweWindow-padding-size);
-	border-radius: var(--sweWindow-border-radius);
-	overflow: auto;
 	scrollbar-gutter: stable;
 }
 .sweWindowFrame>.sweWindow {

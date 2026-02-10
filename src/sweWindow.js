@@ -443,27 +443,41 @@ class sweScreen {
 	}
 
 
+	/*--------------------------------------------------
+			高速版 mergeConfig (structuredClone 代替)
+	--------------------------------------------------*/
 	mergeConfig = (target, source) => {
-		if (typeof target !== 'object' || target === null || Array.isArray(target)) {
+		// どちらかがオブジェクトでない場合は source を優先
+		if (source === null || typeof source !== 'object' || Array.isArray(source)) {
 			return source;
 		}
-		if (typeof source !== 'object' || source === null || Array.isArray(source)) {
-			return source;
+		if (target === null || typeof target !== 'object' || Array.isArray(target)) {
+			// target がプリミティブなら、source を浅くコピーして返す
+			return Array.isArray(source) ? [...source] : { ...source };
 		}
 
-		const output = structuredClone(target);
+		// 新しいオブジェクトを作成（structuredClone を使わず、1階層ずつコピー）
+		const output = { ...target };
 
 		for (const key of Object.keys(source)) {
 			const sourceValue = source[key];
 			const targetValue = output[key];
 
+			// 両方がオブジェクト（プレーンな連想配列）なら再帰的にマージ
 			if (
-				typeof sourceValue === 'object' && sourceValue !== null && !Array.isArray(sourceValue) &&
-				typeof targetValue === 'object' && targetValue !== null && !Array.isArray(targetValue)
+				sourceValue && typeof sourceValue === 'object' && !Array.isArray(sourceValue) &&
+				targetValue && typeof targetValue === 'object' && !Array.isArray(targetValue)
 			) {
 				output[key] = this.mergeConfig(targetValue, sourceValue);
 			} else {
-				output[key] = sourceValue;
+				// 片方がプリミティブ、または配列なら上書き（参照を切るためコピー）
+				if (Array.isArray(sourceValue)) {
+					output[key] = [...sourceValue];
+				} else if (sourceValue && typeof sourceValue === 'object') {
+					output[key] = { ...sourceValue };
+				} else {
+					output[key] = sourceValue;
+				}
 			}
 		}
 
@@ -631,7 +645,7 @@ class sweWindow {
 		this.addResizeParts();
 
 		// コンテンツの高さ調整
-		this.adjust_wdNode_height();
+		//		this.adjust_wdNode_height();
 
 		// bringToFront ?
 		//		this.activateToByConfig();
@@ -817,17 +831,16 @@ class sweWindow {
 
 		// 高さ
 		if (this.rect.height) {
-			const height = parseInt(this.rect.height);
-			this.wdNode.style.height = height + (parseInt(styles.paddingTop) + parseInt(styles.paddingBottom)) + "px";
+			const height = +this.rect.height;
+			this.wdNode.style.height = height + (+styles.paddingTop.replace(/px/, '') + +styles.paddingBottom.replace(/px/, '')) + "px";
 		} else {
 			this.wdNode.style.height = this.frNode.style.height;
 		}
-		this.frNode.style.height = parseInt(this.wdNode.offsetHeight) + parseInt(this.hdNode.offsetHeight) + "px";
+		this.frNode.style.height = +this.wdNode.offsetHeight + +this.hdNode.offsetHeight + "px";
 
 		// 幅
 		if (this.rect.width) {
-			const width = parseInt(this.rect.width);
-			this.wdNode.style.width = width + (parseInt(styles.paddingLeft) + parseInt(styles.paddingRight)) + "px";
+			this.wdNode.style.width = this.rect.width + (+styles.paddingLeft.replace(/px/, '') + +styles.paddingRight.replace(/px/, '')) + "px";
 		} else {
 			this.wdNode.style.width = "100%";
 		}
@@ -883,13 +896,13 @@ class sweWindow {
 	--------------------------------------------------*/
 	setCurrentrect = () => {
 		if (!this.frNode.style.height || !this.frNode.style.width || !this.frNode.style.top || !this.frNode.style.left) return;
-
+		//		console.log(`this.frNode.style.height`, +this.frNode.style.height.replace(/px/, ''));
 		// ウィンドウのサイズ
 		this.rect = {
-			height: parseInt(this.frNode.style.height),
-			width: parseInt(this.frNode.style.width),
-			top: parseInt(this.frNode.style.top),
-			left: parseInt(this.frNode.style.left)
+			height: +this.frNode.style.height.replace(/px/, ''),
+			width: +this.frNode.style.width.replace(/px/, ''),
+			top: +this.frNode.style.top.replace(/px/, ''),
+			left: +this.frNode.style.left.replace(/px/, '')
 		};
 
 	};
@@ -1250,17 +1263,22 @@ class sweWindow {
 
 
 	/*-------------------------------------------------
-		コンテントウィンドウの高さを揃える
+			コンテントウィンドウの高さを揃える
 	-------------------------------------------------*/
-	adjust_wdNode_height = () => {
+	adjust_wdNode_height = (calculatedHeight = null) => {
 		if (
 			this.frNode.classList.contains("maximizeAnim") ||
 			this.frNode.classList.contains("minimizeAnim")
 		) return;
 
-		const h = this.frNode.clientHeight - this.hdNode.offsetHeight;
+		// calculatedHeight が渡されている場合はそれを使用し、
+		// ない場合のみ clientHeight を参照してリフローを発生させる
+		const frameHeight = calculatedHeight ?? this.frNode.clientHeight;
+		const h = frameHeight - this.hdNode.offsetHeight;
+
 		if (h > 0) {
-			this.wdNode.style.height = h + "px";
+			//this.wdNode.style.height = h + "px";
+			this.wdNode.style.setProperty('--window-height', h + 'px');
 		}
 	};
 
@@ -1342,7 +1360,7 @@ class sweWindow {
 
 		if (!this.twNode || !this.rect) return;
 
-		this.frNode.style.display = "block";
+		this.frNode.style.display = "flex";
 
 		this.lastStat = "minimize";
 		const brect = this.twNode.getBoundingClientRect();
@@ -1364,13 +1382,15 @@ class sweWindow {
 		this.frNode.classList.add("restoreAnim");
 
 		this.frNode.addEventListener("animationend", () => {
-
-			// アニメ終了で transform解除
 			this.frNode.style.transform = "";
 			this.frNode.style.opacity = "";
-
 			this.frNode.classList.remove("restoreAnim");
 			this.frNode.classList.remove("minimize");
+
+			// ★ 重要：復元後に高さを再認識させる
+			// 親が flex: column なら、子の .sweWindow は自動で広がるはずですが、
+			// 万が一のために JS での高さ固定をクリアします。
+			this.wdNode.style.height = "";
 
 			this.bringToFront();
 
@@ -1431,7 +1451,7 @@ class sweWindow {
 		// 最大化中でも前面に
 		this.bringToFront();
 
-		this.frNode.style.display = "block";
+		this.frNode.style.display = "flex";
 		this.lastStat = "maximize";
 
 		// maximize状態の見た目を一旦 px で固定（現在値を確定）
@@ -1483,7 +1503,7 @@ class sweWindow {
 		this.bringToFront();
 
 		this.lastStat = "minimize";
-		this.frNode.style.display = "block";
+		this.frNode.style.display = "flex";
 
 		// 念のため transform / opacity を初期化
 		this.frNode.style.transform = "none";
@@ -1601,55 +1621,29 @@ class sweWindow {
 
 
 	/*--------------------------------------------------
-		ウィンドウの移動
+			ウィンドウの移動（GPU加速版）
 	--------------------------------------------------*/
 	moveWindow = () => {
-
 		let dragging = false;
-		let armed = false;           // ★ クリック開始直後（まだドラッグ確定してない）
+		let armed = false;
 		let startLeft = 0, startTop = 0;
-		let mousePos = { left: 0, top: 0 };
-		let nextX = 0, nextY = 0;
-		let pending = false;
+		let mousePos = { x: 0, y: 0 };
 		let activePointerId = null;
+		let currentDX = 0, currentDY = 0;
 
 		const isBlocked = () =>
 			this.frNode.classList.contains("maximize") ||
 			this.frNode.classList.contains("minimize");
 
 		const requestDraw = () => {
-			if (pending) return;
-			pending = true;
-
+			// ドラッグ中のみ requestAnimationFrame で描画
+			if (!dragging) return;
 			requestAnimationFrame(() => {
-				this.frNode.style.left = nextX + "px";
-				this.frNode.style.top = nextY + "px";
-				pending = false;
+				if (!dragging) return;
+				this.frNode.style.transform = `translate(${currentDX}px, ${currentDY}px)`;
 			});
 		};
 
-		// ===== ダブルクリックで maximize トグル =====
-		this.hdNode.addEventListener("dblclick", (e) => {
-			// ボタン領域は除外（あなたの stopPropagation 対策と併用）
-			if (e.target.closest(".sweWindowHeaderButtons")) return;
-
-			e.preventDefault();
-			e.stopPropagation();
-
-			// クリック途中の状態をキャンセル
-			armed = false;
-			if (dragging && activePointerId !== null) {
-				try { this.hdNode.releasePointerCapture(activePointerId); } catch { }
-			}
-			dragging = false;
-			this.frNode.classList.remove("dragging");
-
-			// maximize ボタンと同じ挙動
-			this.toggleMaximize?.(); // ← 既存があるならそれを
-			// ないなら: this.normal2maximize / maximize2normal の分岐でもOK
-		}, { passive: false });
-
-		// ===== 移動開始（ただし即ドラッグ開始しない） =====
 		this.hdNode.addEventListener("pointerdown", (e) => {
 			if (e.button !== 0 || isBlocked()) return;
 			if (e.target.closest(".sweWindowHeaderButtons")) return;
@@ -1657,72 +1651,81 @@ class sweWindow {
 			armed = true;
 			dragging = false;
 			activePointerId = e.pointerId;
-
 			this.hdNode.setPointerCapture(e.pointerId);
 
-			mousePos = { left: e.clientX, top: e.clientY };
-			startLeft = parseInt(this.frNode.style.left) || 0;
-			startTop = parseInt(this.frNode.style.top) || 0;
+			// 開始時のマウス位置を保存
+			mousePos = { x: e.clientX, y: e.clientY };
 
-			nextX = startLeft;
-			nextY = startTop;
+			// 開始時のウィンドウの「実際のスタイル値」を取得
+			// parseFloat(style.left) が取れない場合に備え getBoundingClientRect ではなく offsetLeft 等を使用
+			startLeft = this.frNode.offsetLeft;
+			startTop = this.frNode.offsetTop;
+
+			currentDX = 0;
+			currentDY = 0;
 		});
 
-		// ===== 移動中 =====
 		this.hdNode.addEventListener("pointermove", (e) => {
 			if (!armed && !dragging) return;
+			if (e.pointerId !== activePointerId) return;
 
-			const dx = e.clientX - mousePos.left;
-			const dy = e.clientY - mousePos.top;
+			const dx = e.clientX - mousePos.x;
+			const dy = e.clientY - mousePos.y;
 
-			// ★ まだドラッグ確定してないなら「少し動いたら開始」
 			if (armed && !dragging) {
-				if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3) return; // クリック扱いの範囲
+				// 遊び（遊びがないとクリックだけで少し動いてしまう）
+				if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3) return;
 				dragging = true;
 				armed = false;
 				this.frNode.classList.add("dragging");
-				// ドラッグ開始時に前面へ（必要なら）
 				this.bringToFront?.();
 			}
 
-			if (!dragging) return;
-
-			nextX = startLeft + dx;
-			nextY = startTop + dy;
-
-			requestDraw();
+			if (dragging) {
+				currentDX = dx;
+				currentDY = dy;
+				requestDraw();
+			}
 		});
 
-		// ===== 終了 =====
-		this.hdNode.addEventListener("pointerup", (e) => {
-			if (activePointerId === e.pointerId) {
-				try { this.hdNode.releasePointerCapture(e.pointerId); } catch { }
+		const endDrag = (e) => {
+			if (e && activePointerId !== e.pointerId) return;
+
+			if (activePointerId !== null) {
+				try { this.hdNode.releasePointerCapture(activePointerId); } catch { }
 				activePointerId = null;
 			}
 
-			// クリックだけで終わった場合
-			if (armed) {
-				armed = false;
-				return;
-			}
-
+			if (armed) { armed = false; return; }
 			if (!dragging) return;
 
 			dragging = false;
 			this.frNode.classList.remove("dragging");
+
+			// --- 座標の確定処理 ---
+			const finalX = startLeft + currentDX;
+			const finalY = startTop + currentDY;
+
+			// transition による「吸い込み」を防止
+			const originalTransition = this.frNode.style.transition;
+			this.frNode.style.transition = "none";
+
+			// top/left を更新し transform を消す
+			this.frNode.style.left = finalX + "px";
+			this.frNode.style.top = finalY + "px";
+			this.frNode.style.transform = "";
+
+			// 強制リフロー
+			this.frNode.offsetHeight;
+
+			// transition を復元
+			this.frNode.style.transition = originalTransition;
+
 			this.setCurrentrect?.();
-		});
+		};
 
-		// pointercancel も入れておくと堅い
-		this.hdNode.addEventListener("pointercancel", (e) => {
-			armed = false;
-			if (activePointerId === e.pointerId) {
-				try { this.hdNode.releasePointerCapture(e.pointerId); } catch { }
-				activePointerId = null;
-			}
-			dragging = false;
-			this.frNode.classList.remove("dragging");
-		});
+		this.hdNode.addEventListener("pointerup", endDrag);
+		this.hdNode.addEventListener("pointercancel", endDrag);
 	};
 
 
@@ -1748,23 +1751,20 @@ class sweWindow {
 			let nextW = null, nextH = null;
 			let nextLeft = null, nextTop = null;
 
-			// rAF 更新メソッド
+			// addResizeParts 内の applyResize を修正
 			const applyResize = () => {
 				if (pending) return;
 				pending = true;
 
 				requestAnimationFrame(() => {
-
-					// 横方向
 					if (nextW !== null) this.frNode.style.width = nextW + "px";
 					if (nextLeft !== null) this.frNode.style.left = nextLeft + "px";
-
-					// 縦方向
 					if (nextH !== null) this.frNode.style.height = nextH + "px";
 					if (nextTop !== null) this.frNode.style.top = nextTop + "px";
-					//console.log("width x height", this.frNode.style.width, this.frNode.style.height);
-					// コンテンツの高さ調整
-					this.adjust_wdNode_height();
+
+					// ★ 修正ポイント: 計算済みの nextH を渡す
+					// nextH が null（横方向のみのリサイズ）の場合は、現在の rect.height を使用
+					//					this.adjust_wdNode_height(nextH ?? this.rect.height);
 
 					pending = false;
 				});
@@ -1784,10 +1784,11 @@ class sweWindow {
 				startMouse.x = e.clientX;
 				startMouse.y = e.clientY;
 
-				startPos.x = parseFloat(this.frNode.style.left) || 0;
-				startPos.y = parseFloat(this.frNode.style.top) || 0;
-				startSize.w = parseFloat(this.frNode.style.width);
-				startSize.h = parseFloat(this.frNode.style.height);
+				// style.left を replace するのではなく、すでに数値で持っている rect を使う
+				startPos.x = this.rect.left;
+				startPos.y = this.rect.top;
+				startSize.w = this.rect.width;
+				startSize.h = this.rect.height;
 
 				let direction = e.target.getAttribute("class")
 					.replace(/^.*sweWindow_resize_| .*$/gms, "");
@@ -1849,7 +1850,7 @@ class sweWindow {
 					document.removeEventListener("pointerup", onPointerUp);
 
 					// コンテンツの高さ調整
-					this.adjust_wdNode_height();
+					//					this.adjust_wdNode_height();
 
 					if (this.moveFlag && this.onMoveEnd) {
 						this.onMoveEnd(this);
