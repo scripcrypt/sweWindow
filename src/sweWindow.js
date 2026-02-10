@@ -39,11 +39,10 @@ class sweScreen {
 	--------------------------------------------------*/
 	constructor(screen = null, config = null) {
 
-					console.log("sweScreen", screen);
 		this.scNode = typeof screen === "string"
 			? document.querySelector(screen)
 			: (screen === null ? document.body : screen);
-		console.log("[screen", this.scNode);
+
 		//		this.configMerge = this.mergeConfig;
 		this.configMerge = this.objectMerge;
 
@@ -1130,7 +1129,7 @@ class sweWindow {
 		let resizeTo;
 
 		this.twNode.addEventListener("pointerdown", (e) => {
-			console.log(e);
+			//			console.log(e);
 			e.preventDefault();
 			e.stopPropagation();
 
@@ -1139,7 +1138,10 @@ class sweWindow {
 				resizeTo = this.lastStat === "maximize" ? "maximize" : "normal";
 			}
 			else {
-				if (this.onFocus) { this.onFocus.call(this, this); console.log("this.onFocus", this.onFocus); }
+				if (this.onFocus) {
+					this.onFocus.call(this, this);
+					//console.log("this.onFocus", this.onFocus);
+				}
 				if (this.frNode.classList.contains("maximize")) {
 					if (this.frNode.classList.contains("active")) {
 						resizeFrom = "maximize";
@@ -1179,7 +1181,10 @@ class sweWindow {
 		this.frNode.addEventListener("pointerdown", (e) => {
 			e.preventDefault();
 			e.stopPropagation();
-			if (this.onFocus) { this.onFocus.call(this, this); console.log("this.onFocus", this.onFocus); }
+			if (this.onFocus) {
+				this.onFocus.call(this, this);
+				//console.log("this.onFocus", this.onFocus);
+			}
 			this.bringToFront();
 		});
 

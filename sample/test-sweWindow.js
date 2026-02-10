@@ -10,7 +10,7 @@ var focusWindow = function () {
 
 window.addEventListener('load', function () {
 
-	console.log("screen", screen);
+	//	console.log("screen", screen);
 	inputWindowId = document.querySelector("#windowId");
 	screen = document.querySelector("#screen");
 
@@ -45,11 +45,11 @@ window.addEventListener('load', function () {
 							return;
 						}
 						const action = windowAction.replace(/^window/, "").toLowerCase();
-						console.log("action", action);
+						//						console.log("action", action);
 
 						if (action && ["focus", "maximize", "minimize", "close"].includes(action)) {
 							const windowId = inputWindowId.value;
-							console.log("windowId", windowId);
+							//							console.log("windowId", windowId);
 							if (!windowId) { alert("no window-id " + windowId); return; }
 							const targetWindow = screen.sweScreen.getWindow(windowId);
 							targetWindow.sweWindow.ctrlWin(action);
