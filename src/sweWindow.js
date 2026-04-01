@@ -590,6 +590,460 @@ class sweWindow {
 	lastStat;
 	justFocused;
 	winid;
+	parentWin = null;
+	innerRoot = null;
+	floatLayer = null;
+	_dockNode = null;
+	_dockAutoHideDefault = false;
+	_dockAutoHideTrigger = "hover";
+
+	/*--------------------------------------------------
+		Internal Desktop / Docking
+	--------------------------------------------------*/
+	ensureInnerDesktop = () => {
+		if (!this.wdNode || this.innerRoot) return;
+
+		this._dockAutoHideDefault = !!(this.scInst?.config?.dock?.autoHide ?? false);
+		this._dockAutoHideTrigger = (this.scInst?.config?.dock?.trigger ?? "hover");
+
+		this.wdNode.classList.add("sweHasInnerDesktop");
+
+		// Move the existing window content into the inner desktop so it becomes part of the
+		// dock layout (otherwise it stays behind the absolute-positioned innerRoot and looks
+		// like it is "under" the dock bands).
+		const existingContentNodes = Array.from(this.wdNode.childNodes);
+
+		const innerRoot = document.createElement("div");
+		innerRoot.classList.add("sweInnerRoot");
+
+		const floatLayer = document.createElement("div");
+		floatLayer.classList.add("sweFloatLayer");
+		floatLayer.append(...existingContentNodes);
+
+		innerRoot.append(floatLayer);
+		this.wdNode.append(innerRoot);
+
+		this.innerRoot = innerRoot;
+		this.floatLayer = floatLayer;
+		this._dockNode = floatLayer;
+	};
+
+	_setFramePosInHostFromViewportRect = (host, viewportRect) => {
+		const hr = host.getBoundingClientRect();
+		const left = viewportRect.left - hr.left;
+		const top = viewportRect.top - hr.top;
+		this.frNode.style.left = left + "px";
+		this.frNode.style.top = top + "px";
+		this.setCurrentrect?.();
+	};
+
+	_clampFrameIntoHost = (host, bottomInset = 0) => {
+		if (!host || !this.frNode) return;
+		const w = this.frNode.offsetWidth || this.rect?.width || 0;
+		const h = this.frNode.offsetHeight || this.rect?.height || 0;
+		const maxLeft = Math.max(0, host.clientWidth - w);
+		const maxTop = Math.max(0, host.clientHeight - bottomInset - h);
+
+		let left = Number(this.frNode.style.left?.replace(/px$/, ""));
+		let top = Number(this.frNode.style.top?.replace(/px$/, ""));
+		if (!Number.isFinite(left)) left = this.frNode.offsetLeft;
+		if (!Number.isFinite(top)) top = this.frNode.offsetTop;
+
+		left = Math.min(Math.max(0, left), maxLeft);
+		top = Math.min(Math.max(0, top), maxTop);
+
+		this.frNode.style.left = left + "px";
+		this.frNode.style.top = top + "px";
+		this.setCurrentrect?.();
+	};
+
+	_isDocked = () => {
+		return !!this.frNode?.closest?.(".sweDockBand");
+	};
+
+	_findParentWindowFromPoint = (x, y) => {
+		const els = document.elementsFromPoint(x, y);
+		for (const el of els) {
+			const fr = el?.closest?.(".sweWindowFrame");
+			if (!fr) continue;
+			if (fr === this.frNode) continue;
+			const inst = fr.sweWindow;
+			if (inst && inst !== this) return inst;
+		}
+		return null;
+	};
+
+	_detectDockDirection = (host, x, y) => {
+		const r = host.getBoundingClientRect();
+		const thresholdX = Math.max(24, Math.min(80, r.width * 0.12));
+		const thresholdY = Math.max(24, Math.min(80, r.height * 0.12));
+
+		const dl = x - r.left;
+		const dr = r.right - x;
+		const dt = y - r.top;
+		const db = r.bottom - y;
+
+		// 左右優先
+		if (dl >= 0 && dl < thresholdX) return "left";
+		if (dr >= 0 && dr < thresholdX) return "right";
+		if (dt >= 0 && dt < thresholdY) return "top";
+		if (db >= 0 && db < thresholdY) return "bottom";
+		return null;
+	};
+
+	attachToParent = (parentWin) => {
+		if (!parentWin || parentWin === this) return;
+		parentWin.ensureInnerDesktop?.();
+		if (!parentWin.floatLayer) return;
+
+		const originParent = this.parentWin;
+		const originBandContent = this.frNode?.closest?.(".sweDockBandContent");
+
+		const vr = this.frNode.getBoundingClientRect();
+		this.frNode.classList.add("teleporting");
+		this.frNode.remove();
+		parentWin.floatLayer.append(this.frNode);
+		this.parentWin = parentWin;
+		this._setFramePosInHostFromViewportRect(parentWin.floatLayer, vr);
+		this._clampFrameIntoHost(parentWin.floatLayer, 0);
+		originParent?._cleanupEmptyDockFrom?.(originBandContent);
+		requestAnimationFrame(() => {
+			this.frNode.classList.remove("teleporting");
+		});
+	};
+
+	detachToScreen = () => {
+		if (!this.scInst?.scNode) return;
+		const originParent = this.parentWin;
+		const originBandContent = this.frNode?.closest?.(".sweDockBandContent");
+		const vr = this.frNode.getBoundingClientRect();
+		this.frNode.classList.add("teleporting");
+		this.frNode.remove();
+		this.scInst.scNode.append(this.frNode);
+		this.parentWin = null;
+		this._setFramePosInHostFromViewportRect(this.scInst.scNode, vr);
+		this._clampFrameIntoHost(this.scInst.scNode, this.tbNode?.offsetHeight ?? 0);
+		originParent?._cleanupEmptyDockFrom?.(originBandContent);
+		this.scInst?.reorderZ?.(this, false);
+		requestAnimationFrame(() => {
+			this.frNode.classList.remove("teleporting");
+		});
+	};
+
+	_ensureDockSplit = (direction) => {
+		this.ensureInnerDesktop();
+		const current = this._dockNode;
+		const split = document.createElement("div");
+		split.classList.add("sweDockSplit");
+		split.classList.add(direction === "left" || direction === "right" ? "row" : "column");
+
+		const main = document.createElement("div");
+		main.classList.add("sweDockMain");
+
+		const band = document.createElement("div");
+		band.classList.add("sweDockBand");
+		band.dataset.side = direction;
+		band.dataset.autoHide = "inherit";
+
+		const tab = document.createElement("div");
+		tab.classList.add("sweDockTab");
+
+		const divider = document.createElement("div");
+		divider.classList.add("sweDockDivider");
+		divider.setAttribute("role", "separator");
+		divider.dataset.side = direction;
+
+		const content = document.createElement("div");
+		content.classList.add("sweDockBandContent");
+
+		// 目的の並び: tab → divider → content（right/bottom） / content → divider → tab（left/top）
+		// ※タブは常にメイン側（ウィンドウ視点で内側）に寄せる
+		if (direction === "right" || direction === "bottom") {
+			band.append(tab);
+			band.append(divider);
+			band.append(content);
+		} else {
+			band.append(content);
+			band.append(divider);
+			band.append(tab);
+		}
+
+		main.append(current);
+
+		const order = (direction === "left" || direction === "top")
+			? [band, main]
+			: [main, band];
+		split.append(...order);
+
+		if (this.innerRoot.contains(current)) {
+			current.replaceWith(split);
+		} else {
+			this.innerRoot.append(split);
+		}
+
+		this._dockNode = main;
+
+		this._attachDockDividerResize(divider, split, band, content, direction);
+		this._applyDockAutoHide(band);
+
+		return { split, main, band, bandContent: content };
+	};
+
+	_recomputeDockNode = () => {
+		this.ensureInnerDesktop();
+		if (!this.innerRoot || !this.floatLayer) return;
+
+		// Find the deepest sweDockMain that still wraps the current float layer
+		let cur = this.floatLayer;
+		let lastMain = null;
+		while (cur && cur !== this.innerRoot) {
+			const main = cur.closest?.(".sweDockMain");
+			if (!main) break;
+			lastMain = main;
+			cur = main.parentElement;
+		}
+
+		this._dockNode = lastMain || this.floatLayer;
+	};
+
+	_cleanupEmptyDockFrom = (node) => {
+		// node: a descendant of sweDockBand (usually bandContent)
+		if (!node) return;
+		const band = node.closest?.(".sweDockBand");
+		if (!band) return;
+		const bandContent = band.querySelector(":scope > .sweDockBandContent");
+		if (!bandContent) return;
+		if (bandContent.children.length > 0) return;
+
+		const split = band.closest?.(".sweDockSplit");
+		if (!split) return;
+
+		const main = split.querySelector(":scope > .sweDockMain");
+		if (!main) return;
+
+		// Remove empty band, then collapse split into main's only child
+		band.remove();
+
+		const survivor = main.firstElementChild;
+		if (survivor) {
+			split.replaceWith(survivor);
+		} else {
+			// If somehow empty, restore float layer to innerRoot
+			this.innerRoot?.append(this.floatLayer);
+			split.remove();
+		}
+
+		this._recomputeDockNode();
+	};
+
+	_applyDockAutoHide = (band) => {
+		const mode = band?.dataset?.autoHide ?? "inherit";
+		const resolved = mode === "inherit" ? this._dockAutoHideDefault : mode === "true";
+		band.classList.toggle("autoHide", !!resolved);
+
+		const trigger = this._dockAutoHideTrigger;
+		if (trigger === "click") {
+			const tab = band.querySelector(".sweDockTab");
+			if (tab && !tab.__sweClickBound) {
+				tab.__sweClickBound = true;
+				tab.addEventListener("pointerdown", (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					band.classList.toggle("expanded");
+				});
+			}
+		}
+		else if (trigger === "hover") {
+			if (!band.__sweHoverBound) {
+				band.__sweHoverBound = true;
+				band.addEventListener("pointerenter", () => {
+					if (!band.classList.contains("autoHide")) return;
+					band.classList.add("expanded");
+				});
+				band.addEventListener("pointerleave", () => {
+					if (!band.classList.contains("autoHide")) return;
+					band.classList.remove("expanded");
+				});
+			}
+		}
+	};
+
+	_attachDockDividerResize = (divider, split, band, bandContent, side) => {
+		let dragging = false;
+		let start = 0;
+		let startSize = 0;
+		const isRow = side === "left" || side === "right";
+		const bandMin = this.scInst?.config?.dock?.bandMin ?? 120;
+		const bandMax = this.scInst?.config?.dock?.bandMax ?? 600;
+		const mainMin = this.scInst?.config?.dock?.mainMin ?? 200;
+		let dividerSize = 4;
+		let activePointerId = null;
+
+		// bandContent は残りを埋める
+		if (bandContent) {
+			bandContent.style.flex = "1 1 auto";
+			bandContent.style.flexBasis = "auto";
+			bandContent.style.width = "";
+			bandContent.style.height = "";
+		}
+
+		divider.addEventListener("pointerdown", (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			dragging = true;
+			activePointerId = e.pointerId;
+			divider.setPointerCapture(e.pointerId);
+			dividerSize = isRow ? (divider.offsetWidth || 4) : (divider.offsetHeight || 4);
+			start = isRow ? e.clientX : e.clientY;
+			startSize = isRow ? band.offsetWidth : band.offsetHeight;
+			window.addEventListener("pointermove", onMove, true);
+			window.addEventListener("pointerup", onUp, true);
+			window.addEventListener("pointercancel", onUp, true);
+		});
+
+		const onMove = (e) => {
+			if (!dragging) return;
+			if (activePointerId !== null && e.pointerId != null && e.pointerId !== activePointerId) return;
+			e.preventDefault();
+			const d = (isRow ? e.clientX : e.clientY) - start;
+			let next = startSize;
+			if (side === "right" || side === "bottom") next = startSize - d;
+			else next = startSize + d;
+
+			const containerSize = isRow ? (split?.clientWidth ?? 0) : (split?.clientHeight ?? 0);
+			// split は main + band の2要素なので、mainMin だけ確保すれば良い
+			const maxByMain = Math.max(bandMin, containerSize - mainMin);
+			const cappedMax = Math.min(bandMax, maxByMain);
+			next = Math.max(bandMin, Math.min(cappedMax, next));
+
+			// 境界（main と band の境界）を動かすため band 自体をリサイズする
+			if (isRow) {
+				band.style.flex = `0 0 ${next}px`;
+				band.style.flexBasis = next + "px";
+				band.style.width = next + "px";
+			} else {
+				band.style.flex = `0 0 ${next}px`;
+				band.style.flexBasis = next + "px";
+				band.style.height = next + "px";
+			}
+		};
+
+		const onUp = (e) => {
+			if (!dragging) return;
+			if (activePointerId !== null && e.pointerId != null && e.pointerId !== activePointerId) return;
+			dragging = false;
+			activePointerId = null;
+			try { divider.releasePointerCapture(e.pointerId); } catch { }
+			window.removeEventListener("pointermove", onMove, true);
+			window.removeEventListener("pointerup", onUp, true);
+			window.removeEventListener("pointercancel", onUp, true);
+		};
+
+		divider.addEventListener("lostpointercapture", onUp);
+	};
+
+	dockChild = (childWin, side) => {
+		if (!childWin || childWin === this) return;
+		this.ensureInnerDesktop();
+		childWin.ensureInnerDesktop?.();
+
+		const originParent = childWin.parentWin;
+		const originBandContent = childWin.frNode?.closest?.(".sweDockBandContent");
+
+		if (childWin.parentWin !== this) {
+			childWin.attachToParent(this);
+		}
+
+		const { bandContent } = this._ensureDockSplit(side);
+		childWin.frNode.remove();
+		bandContent.append(childWin.frNode);
+		childWin.frNode.style.left = "0px";
+		childWin.frNode.style.top = "0px";
+		childWin.frNode.style.width = "100%";
+		childWin.frNode.style.height = "100%";
+		childWin.setCurrentrect?.();
+		childWin.frNode.classList.add("docked");
+
+		const tab = bandContent.closest(".sweDockBand")?.querySelector(".sweDockTab");
+		if (tab) tab.textContent = childWin.title || childWin.winid || "dock";
+		this._applyDockAutoHide(bandContent.closest(".sweDockBand"));
+		originParent?._cleanupEmptyDockFrom?.(originBandContent);
+		childWin.bringToFront?.();
+	};
+
+	undockToFloat = (childWin) => {
+		if (!childWin || childWin.parentWin !== this) return;
+		this.ensureInnerDesktop();
+		const vr = childWin.frNode.getBoundingClientRect();
+		const fromBandContent = childWin.frNode.closest?.(".sweDockBandContent");
+		childWin.frNode.classList.add("teleporting");
+		childWin.frNode.classList.remove("docked");
+		childWin.frNode.style.width = "";
+		childWin.frNode.style.height = "";
+		childWin.frNode.remove();
+		this.floatLayer.append(childWin.frNode);
+		childWin._setFramePosInHostFromViewportRect(this.floatLayer, vr);
+		childWin._clampFrameIntoHost(this.floatLayer, 0);
+		this._cleanupEmptyDockFrom(fromBandContent);
+		requestAnimationFrame(() => {
+			childWin.frNode.classList.remove("teleporting");
+		});
+	};
+
+	_handleDropAfterMove = (e) => {
+		if (!e) return;
+		const x = e.clientX;
+		const y = e.clientY;
+		const ctrl = !!e.ctrlKey;
+		const shift = !!e.shiftKey;
+		const dockMode = shift;
+
+		// Ctrl / Shift なしは構造操作を一切しない（移動のみ）
+		if (!ctrl && !shift) return;
+
+		// Ctrl: 親の外へ落としたら detach
+		if (ctrl && this.parentWin) {
+			const host = this.parentWin.floatLayer || this.parentWin.wdNode;
+			if (host) {
+				const pr = host.getBoundingClientRect();
+				const inside = x >= pr.left && x <= pr.right && y >= pr.top && y <= pr.bottom;
+				if (!inside) {
+					this.detachToScreen();
+					return;
+				}
+			}
+		}
+
+		const parent = this._findParentWindowFromPoint(x, y);
+		if (parent) {
+			const host = parent.floatLayer || parent.wdNode;
+
+			// Shift: 端なら帯化（dock）。必要なら親へ attach してから dock。
+			if (dockMode) {
+				const side = parent._detectDockDirection(host, x, y);
+				if (side) {
+					parent.dockChild(this, side);
+					return;
+				}
+			}
+
+			// Ctrl: 親へ入れる（attach）
+			if (ctrl) {
+				this.attachToParent(parent);
+				return;
+			}
+			return;
+		}
+
+		// Shift: dock 解除（帯→子）
+		if (this.parentWin && dockMode && this._isDocked()) {
+			const host = this.parentWin.floatLayer || this.parentWin.wdNode;
+			const side = this.parentWin._detectDockDirection(host, x, y);
+			if (!side) {
+				this.parentWin.undockToFloat(this);
+			}
+		}
+	};
 
 
 	/*--------------------------------------------------
@@ -625,6 +1079,9 @@ class sweWindow {
 
 		// ヘッダーを付加する
 		this.addHeader();
+
+		// 内部デスクトップ（子ウィンドウ用）
+		this.ensureInnerDesktop();
 
 		// タスクバーに追加
 		this.add2taskbar();
@@ -1208,6 +1665,11 @@ class sweWindow {
 		ウィンドウを前面に出す　
 	--------------------------------------------------*/
 	bringToFront = () => {
+		// dock された子がアクティブになったら親チェーンもアクティブ化する
+		// （attach しただけでは親をアクティブ化しない）
+		if (this.parentWin && this.frNode?.classList?.contains("docked")) {
+			this.parentWin.bringToFront?.();
+		}
 		this.frNode.parentNode.querySelectorAll(".sweWindowFrame.active").forEach((swf) => {
 			if (swf !== this.frNode) {
 				swf.classList.remove("active");
@@ -1647,6 +2109,8 @@ class sweWindow {
 		this.hdNode.addEventListener("pointerdown", (e) => {
 			if (e.button !== 0 || isBlocked()) return;
 			if (e.target.closest(".sweWindowHeaderButtons")) return;
+			// dock 中は通常操作を禁止（構造操作の Ctrl 系のみ許可）
+			if (this.frNode.classList.contains("docked") && !(e.ctrlKey || e.shiftKey)) return;
 
 			armed = true;
 			dragging = false;
@@ -1684,6 +2148,32 @@ class sweWindow {
 			if (dragging) {
 				currentDX = dx;
 				currentDY = dy;
+
+				// Ctrl ドラッグ中、親の外へ出たら自動 detach（ドラッグ継続）
+				if (e.ctrlKey && this.parentWin) {
+					const host = this.parentWin.floatLayer || this.parentWin.wdNode;
+					if (host) {
+						const pr = host.getBoundingClientRect();
+						const margin = 16;
+						const outside =
+							e.clientX < pr.left - margin ||
+							e.clientX > pr.right + margin ||
+							e.clientY < pr.top - margin ||
+							e.clientY > pr.bottom + margin;
+						if (outside) {
+							// 現在の transform を viewportRect に反映させたまま screen に戻す
+							this.detachToScreen();
+							// detach 後の座標系へドラッグ基準をリセット
+							this.frNode.style.transform = "";
+							mousePos = { x: e.clientX, y: e.clientY };
+							startLeft = this.frNode.offsetLeft;
+							startTop = this.frNode.offsetTop;
+							currentDX = 0;
+							currentDY = 0;
+						}
+					}
+				}
+
 				requestDraw();
 			}
 		});
@@ -1722,6 +2212,7 @@ class sweWindow {
 			this.frNode.style.transition = originalTransition;
 
 			this.setCurrentrect?.();
+			this._handleDropAfterMove?.(e);
 		};
 
 		this.hdNode.addEventListener("pointerup", endDrag);
@@ -1772,6 +2263,8 @@ class sweWindow {
 
 			// 掴む
 			resizer.addEventListener("pointerdown", (e) => {
+				// dock 中はリサイズさせない
+				if (this.frNode.classList.contains("docked")) return;
 
 				dragging = true;
 

@@ -12,74 +12,27 @@
 </head>
 <body>
 	<div id="screen-ctrl" style="margin-left: 5px;">
-		<button id="screenResize">Resize</button>
-		<button id="showWinById">show winById</button>
-		<button id="focus" target='xxx', action="focus">focus</button>
-		<button id="maximize" target='xxx', action="maximize">maximize</button>
-		<button id="minimize" target='xxx', action="minimize">minimize</button>
-		<button id="close" target='xxx', action="close">close</button>
-		<button id="newwwindow7" target='xxx', action="close">new window 7</button>
-		<br>
-		<input id="windowId" style="width:150px;">
-		<button action="windowFocus">focus</button>
-		<button action="windowmaximize">maximize</button>
-		<button action="windowminimize">minimize</button>
-		<button action="windowclose">close</button>
-		<button action="newwindow15">new window 15</button>
+		<input id="windowId" style="width:150px;" placeholder="focused window-id">
 	</div>
 	<div id="screen" class="sweScreen">
-
-		<div window-title="野球も変わりつつあるよね" top=400 left=20 height=680 width=700  type="fact" class="sweWindow">
-			<h3>侍ジャパン、韓国下しアジアＣＳ連覇！　門脇が延長十回にサヨナラ打</h3>
-			<div class="center"><img src="img/baseballjapan.png"></div>
-			<pre style="height: 200px;">アジアプロ野球チャンピオンシップ決勝（１９日、日本４ｘ－３韓国、東京Ｄ）野球日本代表「侍ジャパン」が延長十回タイブレークの末、韓国に逆転サヨナラ勝ちし、２０１７年の第１回大会に続く連覇を果たした。
-
-				侍ジャパンは大会初登板の先発・今井（西武）が三回に４番・盧施ファンに先制の２点二塁打を許したが、五回に４番・牧（ＤｅＮＡ）が左越えにソロ本塁打を放って１点差に詰め寄った。そして六回は１死三塁から８番・佐藤輝（阪神）の中犠飛で同点に追いついた。五回から登板した２番手根本（日本ハム）が３回を１安打無失点に抑えて流れを呼び込んだ。
-				
-				２－２の延長十回から無死一、二塁でスタートするタイブレークに突入。１点を勝ち越されたその裏、代打・古賀（西武）の犠打と牧の申告敬遠で１死満塁としたあと、坂倉（広島）の中犠飛でまず同点に追いついた。さらに万波（日本ハム）の申告敬遠で２死満塁とし、門脇（巨人）が左前打を放ち勝負を決めた。</pre>
-		</div>
-
-		<div window-title="横長のウィンドウってことぉ〜" top=50 left=250 height=200 width=611 url="sample/window_content_2.html" class="sweWindow"></div>
-
-		<div window-title="日本のトイレはきれいで良かったよぉ" height=640 width=722 top=100 left=900  type="data" window-id="xxx" url="sample/window_content_3.html" class="sweWindow"></div>
-
-		<div window-title="AMDが“高コスパ”のプロ向けGPU「Radeon PRO W7700」を発表　実力をチェック！" width=700 height=300 type="article" class="sweWindow">
-			<h3>AMDが“高コスパ”のプロ向けGPU「Radeon PRO W7700」を発表　実力をチェック！</h3>
-			<div class="row">
-				<div class="center"><img src="img/radeon.jpg" width="200px"></div>
-				<pre>AMDは11月13日（米国太平洋時間）、デスクトップワークステーション向けGPU「Radeon PRO W7700」を発表した。本GPUを搭載するグラフィックスカードは同日から発売される他、カードをあらかじめ組み込んだワークステーションも11月中から順次登場する予定だ。グラフィックスカードの想定販売価格は999ドル（約15万1400円）となる。</pre>
+		<div window-title="Host Window" window-id="host" top=120 left=120 width=900 height=600 class="sweWindow">
+			<div style="padding:8px; line-height:1.6;">
+				<div>Drag another window into this window to make it a child.</div>
+				<div>Hold Ctrl and drop at edges to create bands (left/right/top/bottom).</div>
+				<div>Hold Ctrl and drop toward center to undock back to floating child.</div>
+				<div>Drag a child outside to detach back to screen.</div>
 			</div>
 		</div>
 
-		<div window-title="[Hyprland] Chatgpt helped me make a thing!" focus=true width=800 height=650 type="info" class="sweWindow">
-			<h3>Hyprland 0.52 out now!</h3>
-			<div class="column">
-				<div class="center"><img src="img/hyprland.webp" width="700px"></div>
-				<pre>Hi fam, another Hyprland update time! There hasn’t been an update in a while, but we back.
-
-		Work is also focused a bit on improving our new hyprtoolkit which will power all hyprland gui apps in the future.
-
-		Anyways, hyprland.
-
-		Breaking changes
-		misc:disable_hyprland_qtutils_check has been moved to misc:disable_hyprland_guiutils_check to reflect qtutils being now archived in favor of guiutils.
-
-		New stuff
-		Tons of new stuff dropped:
-
-		you can now mark submaps as automatically closing after a keybind has been executed
-		new dispatcher: forceidle
-		fullscreen now has set, unset and toggle for less IPC queries
-		new CM options: dcip3, dp3 and adobe
-		you can now set rotation for each input device that supports it
-		noscreenshare now also available as a layerrule
-		cursor:zoom_disable_aa for controlling whether you want a pixelated or blurry look when zooming into your cursor
-		new modal prop for windowrules
-		and much more!</pre>
+		<div window-title="Tool Window" window-id="tool" top=200 left=1100 width=360 height=420 class="sweWindow">
+			<div style="padding:8px;">
+				<button id="btn-new" style="width:100%;">New Window</button>
+				<div style="height:10px;"></div>
+				<button id="btn-new-autohide" style="width:100%;">New Window (autoHide dock)</button>
+				<div style="height:10px;"></div>
+				<div>Tip: create multiple windows and dock them repeatedly for nested bands.</div>
 			</div>
 		</div>
-
-		<div window-title="PHP 8.5 が出たので、パイプライン演算子を使ってログ整形ツールを書いてみた"  width=1000 height=600 type="article" window-id="php8.5" url="sample/window_content_6.html" class="sweWindow"></div>
 	</div>
 	<script>
 		window.addEventListener('load', function () {

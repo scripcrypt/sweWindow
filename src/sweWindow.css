@@ -16,7 +16,8 @@
 	--sweWindow-box-shadow: 0 0 12px 1px rgba(0, 0, 0, 0.2);
 	--sweWindow-scrollbar-thumb-widt: 8px;
 	--sweWindow-scrollbar-thumb-color: rgb(65, 78, 80);
-	--sweWindow-header-height: 32px;
+	--sweWindow-header-height: 36px;
+	--dock-tab-size: 20px;
 	--sweWindow-header-padding-top: 2px;
 	--sweWindow-header-padding-right: 0px;
 	--sweWindow-header-padding-bottom: 3px;
@@ -179,6 +180,17 @@ pre {
 	box-shadow: none !important;
 	transition: none !important;
 }
+.sweWindowFrame.teleporting {
+	transition: none !important;
+}
+.sweWindowFrame.docked > .sweWindowHeader {
+	display: none;
+}
+.sweWindowFrame.docked {
+	border-radius: 0;
+	border: none;
+	box-shadow: none;
+}
 .sweWindowFrame.maximize {
 	position: absolute;
 	top: 0;
@@ -276,6 +288,12 @@ pre {
 	box-sizing: border-box;
 	padding: var(--sweWindow-padding-size);
 	scrollbar-gutter: stable;
+}
+
+.sweWindow.sweHasInnerDesktop {
+	padding: 0 !important;
+	overflow: hidden;
+	scrollbar-gutter: auto;
 }
 .sweWindowFrame>.sweWindow {
 	visibility: visible;
@@ -470,6 +488,19 @@ pre {
 .sweWindow_resize_leftTop:hover {
 	cursor: nwse-resize;
 }
+
+/* dock 中は通常のウィンドウリサイズ帯を無効化（カーソル変化/ヒット防止） */
+.sweWindowFrame.docked .sweWindow_resize_top,
+.sweWindowFrame.docked .sweWindow_resize_topRight,
+.sweWindowFrame.docked .sweWindow_resize_right,
+.sweWindowFrame.docked .sweWindow_resize_rightBottom,
+.sweWindowFrame.docked .sweWindow_resize_bottom,
+.sweWindowFrame.docked .sweWindow_resize_bottomLeft,
+.sweWindowFrame.docked .sweWindow_resize_left,
+.sweWindowFrame.docked .sweWindow_resize_leftTop {
+	pointer-events: none;
+	cursor: default !important;
+}
 .sweWindowFrame,
 .sweWindowHeader,
 .sweWindow_resize_top,
@@ -507,8 +538,251 @@ pre {
 	outline: 1px dashed rgba(255, 255, 255, 0.4);
 }
 .sweWindowBody {
+	display: flex;
+	flex-direction: column;
+}
+
+.sweHasInnerDesktop {
+	position: relative;
+	overflow: hidden;
+}
+
+.sweWindow.sweHasInnerDesktop .sweWindowBody {
+	padding: 0;
+}
+
+.sweInnerRoot {
+	position: absolute;
+	inset: 0;
+	pointer-events: auto;
+}
+
+.sweFloatLayer,
+.sweDockMain,
+.sweDockBandContent {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	pointer-events: auto;
+}
+
+.sweDockSplit {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	min-width: 0;
+	min-height: 0;
+	pointer-events: auto;
+	padding: 0;
+	margin: 0;
+}
+
+.sweDockSplit.row {
+	flex-direction: row;
+}
+
+.sweDockSplit.column {
+	flex-direction: column;
+}
+
+.sweDockMain {
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+}
+
+.sweDockDivider {
+	flex: 0 0 auto;
+	background: var(--sweWindow-background-color);
+	outline: none;
+	backdrop-filter: none;
+	pointer-events: auto;
+	touch-action: none;
+	user-select: none;
+	position: relative;
+	z-index: 3;
+	min-width: 8px;
+	min-height: 8px;
+	align-self: stretch;
+}
+
+/* divider は透明の当たり判定として残し、境界線だけ描画する */
+.sweDockDivider::after {
+	content: "";
+	position: absolute;
+	background: rgba(255, 255, 255, 0.22);
+	pointer-events: none;
+}
+
+/* 境界線は divider の「メイン側の端」に寄せる（タブは線の外側=帯側） */
+.sweDockBand[data-side="left"] > .sweDockDivider::after,
+.sweDockBand[data-side="right"] > .sweDockDivider::after {
+	top: 0;
+	bottom: 0;
+	width: 1px;
+	left: 50%;
+	transform: translateX(-0.5px);
+}
+
+.sweDockBand[data-side="left"] > .sweDockDivider::after {
+	/* left: content|divider|tab なので線は tab 側 */
+	right: auto;
+}
+
+.sweDockBand[data-side="right"] > .sweDockDivider::after {
+	/* right: tab|divider|content なので線は tab 側 */
+	left: 50%;
+}
+
+.sweDockBand[data-side="top"] > .sweDockDivider::after,
+.sweDockBand[data-side="bottom"] > .sweDockDivider::after {
+	left: 0;
+	right: 0;
+	height: 1px;
+	top: 50%;
+	transform: translateY(-0.5px);
+}
+
+.sweDockBand[data-side="top"] > .sweDockDivider::after {
+	/* top: content|divider|tab なので線は tab 側 */
+	bottom: auto;
+}
+
+.sweDockBand[data-side="bottom"] > .sweDockDivider::after {
+	/* bottom: tab|divider|content なので線は tab 側 */
+	top: 50%;
+}
+
+.sweDockBand[data-side="left"] > .sweDockDivider,
+.sweDockBand[data-side="right"] > .sweDockDivider {
+	width: 8px;
+	height: 100%;
+	cursor: col-resize;
+}
+
+.sweDockBand[data-side="top"] > .sweDockDivider,
+.sweDockBand[data-side="bottom"] > .sweDockDivider {
+	height: 8px;
+	width: 100%;
+	cursor: row-resize;
+}
+
+.sweDockBand {
+	flex: 0 0 auto;
+	display: flex;
+	background: var(--sweWindow-background-color);
+	border: none;
+	border-radius: 0;
+	overflow: visible;
+	min-width: 0;
+	min-height: 0;
+	pointer-events: auto;
+	padding: 0;
+	margin: 0;
+}
+
+.sweDockBandContent {
+	background: var(--sweWindow-background-color);
+}
+
+.sweDockBand[data-side="left"],
+.sweDockBand[data-side="right"] {
+	width: 260px;
+	flex-direction: row;
+	height: 100%;
+	align-items: stretch;
+}
+
+.sweDockBand[data-side="top"],
+.sweDockBand[data-side="bottom"] {
+	height: 200px;
+	flex-direction: column;
+	width: 100%;
+	align-items: flex-start;
+}
+
+.sweDockTab {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgb(20, 20, 20);
+	color: rgba(255, 255, 255, 0.9);
+	font-size: 12px;
+	user-select: none;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	pointer-events: auto;
+	margin: 0;
+}
+
+.sweDockBand[data-side="left"] > .sweDockTab,
+.sweDockBand[data-side="right"] > .sweDockTab {
+	width: var(--dock-tab-size);
+	flex: 0 0 var(--dock-tab-size);
+	align-self: flex-start;
+	height: auto;
+	padding: 6px 3px;
+	font-size: 11px;
+	writing-mode: vertical-rl;
+	text-orientation: mixed;
+}
+
+.sweDockBand[data-side="top"] > .sweDockTab,
+.sweDockBand[data-side="bottom"] > .sweDockTab {
+	height: var(--dock-tab-size);
+	flex: 0 0 var(--dock-tab-size);
+	align-self: flex-start;
+	padding: 3px 8px;
+	font-size: 11px;
+}
+
+.sweDockBandContent {
+	flex: 1 1 auto;
+	align-self: stretch;
+	inline-size: 100%;
+	block-size: 100%;
+	background: rgba(0, 0, 0, 0.18);
+	border: none;
+	border-radius: 0;
+	overflow: hidden;
+	min-width: 0;
+	min-height: 0;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockBandContent {
+	display: none;
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="left"],
+.sweDockBand.autoHide:not(.expanded)[data-side="right"] {
+	width: var(--dock-tab-size);
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="top"],
+.sweDockBand.autoHide:not(.expanded)[data-side="bottom"] {
+	height: var(--dock-tab-size);
+}
+
+.sweDockBand.autoHide[data-side="left"]:hover,
+.sweDockBand.autoHide[data-side="right"]:hover,
+.sweDockBand.autoHide[data-side="top"]:hover,
+.sweDockBand.autoHide[data-side="bottom"]:hover {
+	outline: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.sweWindowBody {
 	padding: 12px 16px;
 	line-height: 1.6;
+}
+
+.sweHasInnerDesktop > .sweWindowBody {
+	padding: 0 !important;
+}
+
+.sweWindow.sweHasInnerDesktop .sweWindowBody {
+	padding: 0 !important;
 }
 /*
 Copyright (c) 2025 scripcrypt
