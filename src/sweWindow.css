@@ -589,6 +589,7 @@ pre {
 	flex: 1 1 auto;
 	min-width: 0;
 	min-height: 0;
+	background: var(--sweWindow-background-color);
 }
 
 .sweDockDivider {
@@ -715,6 +716,8 @@ pre {
 	text-overflow: ellipsis;
 	pointer-events: auto;
 	margin: 0;
+	transition: background-color 120ms ease;
+	cursor: pointer;
 }
 
 .sweDockBand[data-side="left"] > .sweDockTab,
@@ -755,6 +758,10 @@ pre {
 	display: none;
 }
 
+.sweDockBand.autoHide:not(.expanded) > .sweDockDivider {
+	display: none;
+}
+
 .sweDockBand.autoHide:not(.expanded)[data-side="left"],
 .sweDockBand.autoHide:not(.expanded)[data-side="right"] {
 	width: var(--dock-tab-size);
@@ -769,7 +776,45 @@ pre {
 .sweDockBand.autoHide[data-side="right"]:hover,
 .sweDockBand.autoHide[data-side="top"]:hover,
 .sweDockBand.autoHide[data-side="bottom"]:hover {
-	outline: 1px solid rgba(255, 255, 255, 0.22);
+	outline: none;
+}
+
+.sweDockBand.autoHide:hover > .sweDockTab {
+	background: rgb(20, 20, 20);
+}
+
+.sweDockBand.autoHide:not(.expanded):hover > .sweDockTab {
+	background: rgb(20, 20, 20);
+	color: rgba(255, 255, 255, 1);
+	box-shadow: none;
+}
+
+.sweDockBand.autoHide > .sweDockTab:hover {
+	background: rgb(120, 0, 0);
+	color: rgba(255, 255, 255, 1);
+	box-shadow:
+		inset 0 0 0 1px rgba(255, 255, 255, 0.55),
+		0 0 8px rgba(255, 40, 40, 0.18);
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockTab:hover {
+	background: rgb(120, 0, 0);
+	color: rgba(255, 255, 255, 1);
+	box-shadow:
+		inset 0 0 0 1px rgba(255, 255, 255, 0.65),
+		0 0 8px rgba(255, 40, 40, 0.18);
+}
+
+.sweDockTab:hover {
+	background: rgb(120, 0, 0);
+	color: rgba(255, 255, 255, 1);
+	box-shadow:
+		inset 0 0 0 1px rgba(255, 255, 255, 0.55),
+		0 0 8px rgba(255, 40, 40, 0.18);
+}
+
+.sweDockTab:active {
+	background: rgb(155, 0, 0);
 }
 
 .sweWindowBody {

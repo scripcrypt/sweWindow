@@ -718,6 +718,20 @@ class sweWindow {
 		});
 	};
 
+	_dockBindToggleAutoHideFromTab = (band) => {
+		const tab = band?.querySelector?.(":scope > .sweDockTab");
+		if (!tab || tab.__sweAutoHideToggleBound) return;
+		tab.__sweAutoHideToggleBound = true;
+		tab.addEventListener("pointerdown", (e) => {
+			if (!e.ctrlKey) return;
+			e.preventDefault();
+			e.stopPropagation();
+			const cur = band?.dataset?.autoHide ?? "inherit";
+			band.dataset.autoHide = (cur === "true") ? "false" : "true";
+			this._applyDockAutoHide(band);
+		});
+	};
+
 	_dockBindAutoHideClick = (band) => {
 		const tab = band.querySelector(".sweDockTab");
 		if (!tab || tab.__sweClickBound) return;
@@ -731,14 +745,37 @@ class sweWindow {
 
 	_dockBindAutoHideHover = (band) => {
 		if (band.__sweHoverBound) return;
+		const tab = band?.querySelector?.(":scope > .sweDockTab");
+		if (!tab) return;
 		band.__sweHoverBound = true;
-		band.addEventListener("pointerenter", () => {
+		const closeDelayMs = this.scInst?.config?.dock?.autoHideCloseDelayMs ?? 180;
+		const cancelClose = () => {
+			if (band.__sweAutoHideCloseTimer != null) {
+				clearTimeout(band.__sweAutoHideCloseTimer);
+				band.__sweAutoHideCloseTimer = null;
+			}
+		};
+		const scheduleClose = () => {
+			cancelClose();
+			band.__sweAutoHideCloseTimer = setTimeout(() => {
+				band.__sweAutoHideCloseTimer = null;
+				if (!band.classList.contains("autoHide")) return;
+				band.classList.remove("expanded");
+			}, closeDelayMs);
+		};
+		tab.addEventListener("pointerenter", () => {
 			if (!band.classList.contains("autoHide")) return;
+			cancelClose();
 			band.classList.add("expanded");
+		});
+
+		// Close only when leaving the whole band to avoid flicker while moving from tab to content.
+		band.addEventListener("pointerenter", () => {
+			cancelClose();
 		});
 		band.addEventListener("pointerleave", () => {
 			if (!band.classList.contains("autoHide")) return;
-			band.classList.remove("expanded");
+			scheduleClose();
 		});
 	};
 
@@ -917,6 +954,7 @@ class sweWindow {
 
 	_applyDockAutoHide = (band) => {
 		this._dockBindUndockFromTab(band);
+		this._dockBindToggleAutoHideFromTab(band);
 		const resolved = this._dockResolveAutoHide(band);
 		band.classList.toggle("autoHide", !!resolved);
 		const trigger = this._dockAutoHideTrigger;
