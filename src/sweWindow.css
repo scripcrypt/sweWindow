@@ -174,17 +174,30 @@ pre {
 	will-change: transform, left, top;
 	transition: none !important;
 	box-shadow: none;
+	z-index: 10000 !important;
 }
 .sweWindowFrame.resizing {
 	will-change: width, height, left, top;
 	box-shadow: none !important;
 	transition: none !important;
+	z-index: 10000 !important;
 }
 .sweWindowFrame.teleporting {
 	transition: none !important;
 }
 .sweWindowFrame.docked > .sweWindowHeader {
 	display: none;
+}
+
+.sweWindowFrame.sweChildInDockBand > .sweWindowHeader {
+	display: none;
+}
+
+.sweWindowFrame.sweChildInDockBand {
+	border-radius: 0;
+	border: none;
+	box-shadow: none;
+	border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 .sweWindowFrame.docked {
 	border-radius: 0;
@@ -557,6 +570,53 @@ pre {
 	pointer-events: auto;
 }
 
+.sweDockOverlayRoot {
+	position: absolute;
+	inset: 0;
+	pointer-events: auto;
+}
+ 
+.sweDockOverlayRoot > .sweFloatLayer {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: 80;
+ }
+
+ .sweDockOverlayRoot > .sweFloatLayer > .sweWindowFrame {
+	pointer-events: auto;
+ }
+ 
+.sweDockOverlayRoot > .sweDockBand {
+	position: absolute;
+	pointer-events: auto;
+	z-index: 40;
+}
+
+.sweDockOverlayRoot > .sweDockBand[data-side="left"] {
+	left: 0;
+	top: 0;
+	bottom: 0;
+}
+
+.sweDockOverlayRoot > .sweDockBand[data-side="right"] {
+	right: 0;
+	top: 0;
+	bottom: 0;
+}
+
+.sweDockOverlayRoot > .sweDockBand[data-side="top"] {
+	left: 0;
+	right: 0;
+	top: 0;
+}
+
+.sweDockOverlayRoot > .sweDockBand[data-side="bottom"] {
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
 .sweFloatLayer,
 .sweDockMain,
 .sweDockBandContent {
@@ -564,6 +624,17 @@ pre {
 	width: 100%;
 	height: 100%;
 	pointer-events: auto;
+}
+
+/* When a window is used as a dock-context container, stack child frames in normal flow */
+.sweDockChildStacking > .sweWindowFrame {
+	position: relative !important;
+	left: auto !important;
+	top: auto !important;
+	inset: auto !important;
+	width: 100% !important;
+	height: auto !important;
+	flex: 0 0 auto !important;
 }
 
 .sweDockSplit {
@@ -590,18 +661,20 @@ pre {
 	min-width: 0;
 	min-height: 0;
 	background: var(--sweWindow-background-color);
+	position: relative;
+	z-index: 1;
 }
 
 .sweDockDivider {
 	flex: 0 0 auto;
-	background: var(--sweWindow-background-color);
+	background: transparent;
 	outline: none;
 	backdrop-filter: none;
 	pointer-events: auto;
 	touch-action: none;
 	user-select: none;
 	position: relative;
-	z-index: 3;
+	z-index: 80;
 	min-width: 8px;
 	min-height: 8px;
 	align-self: stretch;
@@ -680,6 +753,12 @@ pre {
 	pointer-events: auto;
 	padding: 0;
 	margin: 0;
+	position: relative;
+	z-index: 2;
+}
+
+.sweDockBand:hover {
+	z-index: 20;
 }
 
 .sweDockBandContent {
@@ -707,6 +786,8 @@ pre {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	position: absolute;
+	z-index: 6;
 	background: rgb(20, 20, 20);
 	color: rgba(255, 255, 255, 0.9);
 	font-size: 12px;
@@ -716,8 +797,114 @@ pre {
 	text-overflow: ellipsis;
 	pointer-events: auto;
 	margin: 0;
-	transition: background-color 120ms ease;
+	transition:
+		background-color 120ms ease,
+		opacity 120ms ease;
 	cursor: pointer;
+}
+
+/* Place the tab on the inner edge so it overlays without taking layout space */
+.sweDockBand[data-side="left"] > .sweDockTab {
+	right: calc(-1 * var(--dock-tab-size));
+	top: 0;
+	bottom: 0;
+}
+
+.sweDockBand[data-side="right"] > .sweDockTab {
+	left: calc(-1 * var(--dock-tab-size));
+	top: 0;
+	bottom: 0;
+}
+
+.sweDockBand[data-side="top"] > .sweDockTab {
+	left: 10px;
+	bottom: calc(-1 * var(--dock-tab-size));
+	width: fit-content;
+	max-width: calc(100% - 20px);
+}
+
+.sweDockBand[data-side="bottom"] > .sweDockTab {
+	left: 10px;
+	top: calc(-1 * var(--dock-tab-size));
+	width: fit-content;
+	max-width: calc(100% - 20px);
+}
+
+/* Tab visibility policy:
+   - autoHide collapsed: show a single small arrow-only tab
+   - autoHide expanded OR non-autoHide: hide tab by default, show on band hover */
+.sweDockBand:not(.autoHide) > .sweDockTab,
+.sweDockBand.autoHide.expanded > .sweDockTab {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.sweDockBand.sweDockShowTab > .sweDockTab {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.sweDockBand:not(.autoHide):hover > .sweDockTab,
+.sweDockBand.autoHide.expanded:hover > .sweDockTab {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockTab {
+	opacity: 1;
+	pointer-events: auto;
+	justify-content: center;
+	padding: 0;
+	gap: 0;
+	font-size: 0;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockTab > .sweDockTabItem {
+	display: none;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockTab::before {
+	font-size: 14px;
+	line-height: 1;
+	opacity: 0.95;
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="left"] > .sweDockTab::before {
+	content: "▶";
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="right"] > .sweDockTab::before {
+	content: "◀";
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="top"] > .sweDockTab::before {
+	content: "▼";
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="bottom"] > .sweDockTab::before {
+	content: "▲";
+}
+
+.sweDockTabItem {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 2px 6px;
+	border-radius: 4px;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.sweDockTab.stacked {
+	gap: 6px;
+}
+
+.sweDockTabItem.active {
+	background: rgb(155, 0, 0);
+	color: rgba(255, 255, 255, 1);
 }
 
 .sweDockBand[data-side="left"] > .sweDockTab,
@@ -726,8 +913,29 @@ pre {
 	flex: 0 0 var(--dock-tab-size);
 	align-self: flex-start;
 	height: auto;
+	max-height: 100%;
 	padding: 6px 3px;
 	font-size: 11px;
+	flex-direction: column;
+	justify-content: flex-start;
+	gap: 4px;
+	writing-mode: vertical-rl;
+	text-orientation: mixed;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: normal;
+}
+
+.sweDockBand[data-side="left"] > .sweDockTab.stacked,
+.sweDockBand[data-side="right"] > .sweDockTab.stacked {
+	writing-mode: horizontal-tb;
+	text-orientation: mixed;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.sweDockBand[data-side="left"] > .sweDockTab > .sweDockTabItem,
+.sweDockBand[data-side="right"] > .sweDockTab > .sweDockTabItem {
 	writing-mode: vertical-rl;
 	text-orientation: mixed;
 }
@@ -739,6 +947,39 @@ pre {
 	align-self: flex-start;
 	padding: 3px 8px;
 	font-size: 11px;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: flex-start;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="left"] > .sweDockTab {
+	right: 0;
+	top: 50%;
+	bottom: auto;
+	transform: translateY(-50%);
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="right"] > .sweDockTab {
+	left: 0;
+	top: 50%;
+	bottom: auto;
+	transform: translateY(-50%);
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="top"] > .sweDockTab {
+	left: 50%;
+	right: auto;
+	bottom: 0;
+	transform: translateX(-50%);
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="bottom"] > .sweDockTab {
+	left: 50%;
+	right: auto;
+	top: 0;
+	transform: translateX(-50%);
 }
 
 .sweDockBandContent {
@@ -749,9 +990,75 @@ pre {
 	background: rgba(0, 0, 0, 0.18);
 	border: none;
 	border-radius: 0;
-	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	overflow: auto;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
 	min-width: 0;
 	min-height: 0;
+	position: relative;
+	z-index: 1;
+}
+
+/* Overlay mode: frames must be in normal flow to make bandContent scrollable */
+.sweDockBandContent > .sweWindowFrame {
+	position: relative !important;
+	left: auto !important;
+	top: auto !important;
+	right: auto !important;
+	bottom: auto !important;
+	inset: auto !important;
+	transform: none !important;
+	flex: 0 0 auto !important;
+	margin: 0 !important;
+	align-self: stretch !important;
+	transition: none !important;
+}
+
+.sweDockBand[data-side="top"] > .sweDockBandContent,
+.sweDockBand[data-side="bottom"] > .sweDockBandContent {
+	flex-direction: row;
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+.sweDockBand[data-side="top"] .sweWindowFrame.sweChildInDockBand,
+.sweDockBand[data-side="bottom"] .sweWindowFrame.sweChildInDockBand {
+	border-top: none;
+	border-left: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.sweDockBandContent > .sweWindowFrame.docked {
+	position: relative;
+	inset: auto;
+}
+
+.sweDockBandContent::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+
+/* Dock band scrolls as a whole (not per subwindow):
+   clip each docked window's contents to avoid visual overlap between blocks */
+.sweDockBandContent .sweWindowFrame.docked {
+	overflow: hidden;
+}
+
+.sweDockBandContent .sweWindow {
+	overflow: auto;
+	height: 100%;
+}
+
+.sweDockBandContent * {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.sweDockBandContent *::-webkit-scrollbar {
+	width: 0;
+	height: 0;
 }
 
 .sweDockBand.autoHide:not(.expanded) > .sweDockBandContent {
@@ -763,7 +1070,7 @@ pre {
 }
 
 .sweDockBand.expanded > .sweDockBandContent {
-	display: block !important;
+	display: flex !important;
 }
 
 .sweDockBand.expanded > .sweDockDivider {
@@ -771,7 +1078,7 @@ pre {
 }
 
 .sweDockBand.autoHide.sweDockResizing > .sweDockBandContent {
-	display: block !important;
+	display: flex !important;
 }
 
 .sweDockBand.autoHide.sweDockResizing > .sweDockDivider {
@@ -779,7 +1086,7 @@ pre {
 }
 
 .sweDockBand.autoHide.sweDockAutoHideResizing > .sweDockBandContent {
-	display: block !important;
+	display: flex !important;
 }
 
 .sweDockBand.autoHide.sweDockAutoHideResizing > .sweDockDivider {
@@ -812,16 +1119,40 @@ pre {
 	color: rgba(255, 255, 255, 1);
 	box-shadow: none;
 }
-
 .sweDockBand.autoHide > .sweDockTab:hover {
 	background: rgb(120, 0, 0);
 	color: rgba(255, 255, 255, 1);
 	box-shadow:
-		inset 0 0 0 1px rgba(255, 255, 255, 0.55),
+		inset 0 0 0 1px rgba(255, 80, 80, 0.32),
 		0 0 8px rgba(255, 40, 40, 0.18);
 }
 
+/* autoHide + stacked: do not highlight the whole strip on hover */
+.sweDockBand.autoHide > .sweDockTab.stacked:hover {
+	background: rgb(20, 20, 20);
+	color: rgba(255, 255, 255, 0.9);
+	box-shadow: none;
+}
+
 .sweDockBand.autoHide:not(.expanded) > .sweDockTab:hover {
+	background: rgb(120, 0, 0);
+	color: rgba(255, 255, 255, 1);
+	box-shadow: none;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockTab.stacked:hover {
+	background: rgb(20, 20, 20);
+	color: rgba(255, 255, 255, 1);
+	box-shadow: none;
+}
+
+.sweDockTab.stacked:hover {
+	background: rgb(20, 20, 20);
+	color: rgba(255, 255, 255, 0.9);
+	box-shadow: none;
+}
+
+.sweDockTabItem:hover {
 	background: rgb(120, 0, 0);
 	color: rgba(255, 255, 255, 1);
 	box-shadow:
