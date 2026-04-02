@@ -733,14 +733,47 @@ class sweWindow {
 	};
 
 	_dockBindAutoHideClick = (band) => {
-		const tab = band.querySelector(".sweDockTab");
+		const tab = band?.querySelector?.(":scope > .sweDockTab");
 		if (!tab || tab.__sweClickBound) return;
 		tab.__sweClickBound = true;
 		tab.addEventListener("pointerdown", (e) => {
 			e.preventDefault();
 			e.stopPropagation();
-			band.classList.toggle("expanded");
+			this._dockSetBandExpanded(band, !band.classList.contains("expanded"));
 		});
+	};
+
+	_dockSetBandExpanded = (band, expanded) => {
+		if (!band) return;
+		const isAutoHide = band.classList.contains("autoHide");
+		if (!isAutoHide) {
+			band.classList.toggle("expanded", !!expanded);
+			return;
+		}
+
+		if (expanded) {
+			const saved = band.__sweAutoHideExpandedStyle;
+			if (saved) {
+				if (saved.flex != null) band.style.flex = saved.flex;
+				if (saved.flexBasis != null) band.style.flexBasis = saved.flexBasis;
+				if (saved.width != null) band.style.width = saved.width;
+				if (saved.height != null) band.style.height = saved.height;
+			}
+			band.classList.add("expanded");
+		} else {
+			// Save last expanded inline sizing and clear it so collapsed CSS (tab-size) can take effect.
+			band.__sweAutoHideExpandedStyle = {
+				flex: band.style.flex || null,
+				flexBasis: band.style.flexBasis || null,
+				width: band.style.width || null,
+				height: band.style.height || null,
+			};
+			band.style.flex = "";
+			band.style.flexBasis = "";
+			band.style.width = "";
+			band.style.height = "";
+			band.classList.remove("expanded");
+		}
 	};
 
 	_dockBindAutoHideHover = (band) => {
@@ -756,17 +789,22 @@ class sweWindow {
 			}
 		};
 		const scheduleClose = () => {
+			if (band.__sweAutoHideLockUntil && Date.now() < band.__sweAutoHideLockUntil) return;
+			if (band.__sweForceExpandedUntil && Date.now() < band.__sweForceExpandedUntil) return;
 			cancelClose();
 			band.__sweAutoHideCloseTimer = setTimeout(() => {
 				band.__sweAutoHideCloseTimer = null;
+				if (band.__sweAutoHideLockUntil && Date.now() < band.__sweAutoHideLockUntil) return;
+				if (band.__sweForceExpandedUntil && Date.now() < band.__sweForceExpandedUntil) return;
+				if (band.__sweResizing) return;
 				if (!band.classList.contains("autoHide")) return;
-				band.classList.remove("expanded");
+				this._dockSetBandExpanded(band, false);
 			}, closeDelayMs);
 		};
 		tab.addEventListener("pointerenter", () => {
 			if (!band.classList.contains("autoHide")) return;
 			cancelClose();
-			band.classList.add("expanded");
+			this._dockSetBandExpanded(band, true);
 		});
 
 		// Close only when leaving the whole band to avoid flicker while moving from tab to content.
@@ -775,6 +813,9 @@ class sweWindow {
 		});
 		band.addEventListener("pointerleave", () => {
 			if (!band.classList.contains("autoHide")) return;
+			if (band.__sweResizing) return;
+			if (band.__sweAutoHideLockUntil && Date.now() < band.__sweAutoHideLockUntil) return;
+			if (band.__sweForceExpandedUntil && Date.now() < band.__sweForceExpandedUntil) return;
 			scheduleClose();
 		});
 	};
@@ -970,8 +1011,11 @@ class sweWindow {
 		const bandMin = this.scInst?.config?.dock?.bandMin ?? 120;
 		const bandMax = this.scInst?.config?.dock?.bandMax ?? 600;
 		const mainMin = this.scInst?.config?.dock?.mainMin ?? 200;
+		const closeDelayMs = this.scInst?.config?.dock?.autoHideCloseDelayMs ?? 180;
 		let dividerSize = 4;
 		let activePointerId = null;
+		let lastClientX = null;
+		let lastClientY = null;
 
 		// bandContent は残りを埋める
 		if (bandContent) {
@@ -985,6 +1029,18 @@ class sweWindow {
 			e.preventDefault();
 			e.stopPropagation();
 			dragging = true;
+			band.__sweResizing = true;
+			band.classList.add("sweDockResizing");
+			band.classList.add("sweDockAutoHideResizing");
+			lastClientX = e.clientX;
+			lastClientY = e.clientY;
+			if (band.__sweAutoHideCloseTimer != null) {
+				clearTimeout(band.__sweAutoHideCloseTimer);
+				band.__sweAutoHideCloseTimer = null;
+			}
+			if (band.classList.contains("autoHide")) {
+				this._dockSetBandExpanded(band, true);
+			}
 			activePointerId = e.pointerId;
 			divider.setPointerCapture(e.pointerId);
 			dividerSize = isRow ? (divider.offsetWidth || 4) : (divider.offsetHeight || 4);
@@ -999,6 +1055,8 @@ class sweWindow {
 			if (!dragging) return;
 			if (activePointerId !== null && e.pointerId != null && e.pointerId !== activePointerId) return;
 			e.preventDefault();
+			lastClientX = e.clientX;
+			lastClientY = e.clientY;
 			const d = (isRow ? e.clientX : e.clientY) - start;
 			let next = startSize;
 			if (side === "right" || side === "bottom") next = startSize - d;
@@ -1027,6 +1085,44 @@ class sweWindow {
 			if (activePointerId !== null && e.pointerId != null && e.pointerId !== activePointerId) return;
 			dragging = false;
 			activePointerId = null;
+			band.__sweResizing = false;
+			band.classList.remove("sweDockResizing");
+			if (band.__sweAutoHideResizingTimer != null) {
+				clearTimeout(band.__sweAutoHideResizingTimer);
+				band.__sweAutoHideResizingTimer = null;
+			}
+			band.__sweAutoHideResizingTimer = setTimeout(() => {
+				band.__sweAutoHideResizingTimer = null;
+				band.classList.remove("sweDockAutoHideResizing");
+			}, 900);
+			// After resize, decide whether to keep expanded based on the last known pointer position.
+			// This prevents ending up in tab-only state when the band boundary moved under the cursor.
+			band.__sweAutoHideLockUntil = Date.now() + Math.max(240, closeDelayMs);
+			if (band.__sweAutoHideCloseTimer != null) {
+				clearTimeout(band.__sweAutoHideCloseTimer);
+				band.__sweAutoHideCloseTimer = null;
+			}
+			if (band.classList.contains("autoHide")) {
+				band.__sweForceExpandedUntil = Date.now() + 900;
+				this._dockSetBandExpanded(band, true);
+				const x = Number.isFinite(e?.clientX) ? e.clientX : lastClientX;
+				const y = Number.isFinite(e?.clientY) ? e.clientY : lastClientY;
+				const br = band.getBoundingClientRect();
+				const inside = Number.isFinite(x) && Number.isFinite(y)
+					? (x >= br.left && x <= br.right && y >= br.top && y <= br.bottom)
+					: false;
+				if (!inside) {
+					band.__sweAutoHideCloseTimer = setTimeout(() => {
+						band.__sweAutoHideCloseTimer = null;
+						if (band.__sweForceExpandedUntil && Date.now() < band.__sweForceExpandedUntil) return;
+						if (band.__sweResizing) return;
+						if (!band.classList.contains("autoHide")) return;
+						this._dockSetBandExpanded(band, false);
+					}, closeDelayMs);
+				}
+			}
+			lastClientX = null;
+			lastClientY = null;
 			try { divider.releasePointerCapture(e.pointerId); } catch { }
 			window.removeEventListener("pointermove", onMove, true);
 			window.removeEventListener("pointerup", onUp, true);

@@ -762,6 +762,30 @@ pre {
 	display: none;
 }
 
+.sweDockBand.expanded > .sweDockBandContent {
+	display: block !important;
+}
+
+.sweDockBand.expanded > .sweDockDivider {
+	display: block !important;
+}
+
+.sweDockBand.autoHide.sweDockResizing > .sweDockBandContent {
+	display: block !important;
+}
+
+.sweDockBand.autoHide.sweDockResizing > .sweDockDivider {
+	display: block !important;
+}
+
+.sweDockBand.autoHide.sweDockAutoHideResizing > .sweDockBandContent {
+	display: block !important;
+}
+
+.sweDockBand.autoHide.sweDockAutoHideResizing > .sweDockDivider {
+	display: block !important;
+}
+
 .sweDockBand.autoHide:not(.expanded)[data-side="left"],
 .sweDockBand.autoHide:not(.expanded)[data-side="right"] {
 	width: var(--dock-tab-size);
