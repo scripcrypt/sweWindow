@@ -776,47 +776,77 @@ class sweWindow {
 		}
 	};
 
+	_dockAutoHideCloseDelayMs = () => {
+		return this.scInst?.config?.dock?.autoHideCloseDelayMs ?? 180;
+	};
+
+	_dockAutoHideCancelClose = (band) => {
+		if (!band) return;
+		if (band.__sweAutoHideCloseTimer != null) {
+			clearTimeout(band.__sweAutoHideCloseTimer);
+			band.__sweAutoHideCloseTimer = null;
+		}
+	};
+
+	_dockAutoHideIsCloseBlocked = (band) => {
+		if (!band) return false;
+		if (band.__sweResizing) return true;
+		const now = Date.now();
+		if (band.__sweAutoHideLockUntil && now < band.__sweAutoHideLockUntil) return true;
+		if (band.__sweForceExpandedUntil && now < band.__sweForceExpandedUntil) return true;
+		return false;
+	};
+
+	_dockAutoHideScheduleClose = (band) => {
+		if (!band) return;
+		if (!band.classList.contains("autoHide")) return;
+		if (this._dockAutoHideIsCloseBlocked(band)) return;
+		this._dockAutoHideCancelClose(band);
+		const closeDelayMs = this._dockAutoHideCloseDelayMs();
+		band.__sweAutoHideCloseTimer = setTimeout(() => {
+			band.__sweAutoHideCloseTimer = null;
+			if (!band.classList.contains("autoHide")) return;
+			if (this._dockAutoHideIsCloseBlocked(band)) return;
+			this._dockSetBandExpanded(band, false);
+		}, closeDelayMs);
+	};
+
+	_dockAutoHideScheduleCloseAfterUnblock = (band) => {
+		if (!band) return;
+		if (!band.classList.contains("autoHide")) return;
+		this._dockAutoHideCancelClose(band);
+		const closeDelayMs = this._dockAutoHideCloseDelayMs();
+		const now = Date.now();
+		const lockUntil = Number(band.__sweAutoHideLockUntil || 0);
+		const forceUntil = Number(band.__sweForceExpandedUntil || 0);
+		const unblockAt = Math.max(now, lockUntil, forceUntil);
+		const waitMs = Math.max(0, unblockAt - now) + closeDelayMs;
+		band.__sweAutoHideCloseTimer = setTimeout(() => {
+			band.__sweAutoHideCloseTimer = null;
+			if (!band.classList.contains("autoHide")) return;
+			if (this._dockAutoHideIsCloseBlocked(band)) return;
+			this._dockSetBandExpanded(band, false);
+		}, waitMs);
+	};
+
 	_dockBindAutoHideHover = (band) => {
 		if (band.__sweHoverBound) return;
 		const tab = band?.querySelector?.(":scope > .sweDockTab");
 		if (!tab) return;
 		band.__sweHoverBound = true;
-		const closeDelayMs = this.scInst?.config?.dock?.autoHideCloseDelayMs ?? 180;
-		const cancelClose = () => {
-			if (band.__sweAutoHideCloseTimer != null) {
-				clearTimeout(band.__sweAutoHideCloseTimer);
-				band.__sweAutoHideCloseTimer = null;
-			}
-		};
-		const scheduleClose = () => {
-			if (band.__sweAutoHideLockUntil && Date.now() < band.__sweAutoHideLockUntil) return;
-			if (band.__sweForceExpandedUntil && Date.now() < band.__sweForceExpandedUntil) return;
-			cancelClose();
-			band.__sweAutoHideCloseTimer = setTimeout(() => {
-				band.__sweAutoHideCloseTimer = null;
-				if (band.__sweAutoHideLockUntil && Date.now() < band.__sweAutoHideLockUntil) return;
-				if (band.__sweForceExpandedUntil && Date.now() < band.__sweForceExpandedUntil) return;
-				if (band.__sweResizing) return;
-				if (!band.classList.contains("autoHide")) return;
-				this._dockSetBandExpanded(band, false);
-			}, closeDelayMs);
-		};
 		tab.addEventListener("pointerenter", () => {
 			if (!band.classList.contains("autoHide")) return;
-			cancelClose();
+			this._dockAutoHideCancelClose(band);
 			this._dockSetBandExpanded(band, true);
 		});
 
 		// Close only when leaving the whole band to avoid flicker while moving from tab to content.
 		band.addEventListener("pointerenter", () => {
-			cancelClose();
+			this._dockAutoHideCancelClose(band);
 		});
 		band.addEventListener("pointerleave", () => {
 			if (!band.classList.contains("autoHide")) return;
-			if (band.__sweResizing) return;
-			if (band.__sweAutoHideLockUntil && Date.now() < band.__sweAutoHideLockUntil) return;
-			if (band.__sweForceExpandedUntil && Date.now() < band.__sweForceExpandedUntil) return;
-			scheduleClose();
+			this._dockAutoHideScheduleClose(band);
 		});
 	};
 
@@ -1011,7 +1041,7 @@ class sweWindow {
 		const bandMin = this.scInst?.config?.dock?.bandMin ?? 120;
 		const bandMax = this.scInst?.config?.dock?.bandMax ?? 600;
 		const mainMin = this.scInst?.config?.dock?.mainMin ?? 200;
-		const closeDelayMs = this.scInst?.config?.dock?.autoHideCloseDelayMs ?? 180;
+		const closeDelayMs = this._dockAutoHideCloseDelayMs();
 		let dividerSize = 4;
 		let activePointerId = null;
 		let lastClientX = null;
@@ -1034,10 +1064,7 @@ class sweWindow {
 			band.classList.add("sweDockAutoHideResizing");
 			lastClientX = e.clientX;
 			lastClientY = e.clientY;
-			if (band.__sweAutoHideCloseTimer != null) {
-				clearTimeout(band.__sweAutoHideCloseTimer);
-				band.__sweAutoHideCloseTimer = null;
-			}
+			this._dockAutoHideCancelClose(band);
 			if (band.classList.contains("autoHide")) {
 				this._dockSetBandExpanded(band, true);
 			}
@@ -1098,10 +1125,7 @@ class sweWindow {
 			// After resize, decide whether to keep expanded based on the last known pointer position.
 			// This prevents ending up in tab-only state when the band boundary moved under the cursor.
 			band.__sweAutoHideLockUntil = Date.now() + Math.max(240, closeDelayMs);
-			if (band.__sweAutoHideCloseTimer != null) {
-				clearTimeout(band.__sweAutoHideCloseTimer);
-				band.__sweAutoHideCloseTimer = null;
-			}
+			this._dockAutoHideCancelClose(band);
 			if (band.classList.contains("autoHide")) {
 				band.__sweForceExpandedUntil = Date.now() + 900;
 				this._dockSetBandExpanded(band, true);
@@ -1112,13 +1136,7 @@ class sweWindow {
 					? (x >= br.left && x <= br.right && y >= br.top && y <= br.bottom)
 					: false;
 				if (!inside) {
-					band.__sweAutoHideCloseTimer = setTimeout(() => {
-						band.__sweAutoHideCloseTimer = null;
-						if (band.__sweForceExpandedUntil && Date.now() < band.__sweForceExpandedUntil) return;
-						if (band.__sweResizing) return;
-						if (!band.classList.contains("autoHide")) return;
-						this._dockSetBandExpanded(band, false);
-					}, closeDelayMs);
+					this._dockAutoHideScheduleCloseAfterUnblock(band);
 				}
 			}
 			lastClientX = null;
