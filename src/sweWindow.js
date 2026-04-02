@@ -600,6 +600,148 @@ class sweWindow {
 	/*--------------------------------------------------
 		Internal Desktop / Docking
 	--------------------------------------------------*/
+	_dockIsRowSide = (side) => {
+		return side === "left" || side === "right";
+	};
+
+	_dockSplitAxisClass = (side) => {
+		return this._dockIsRowSide(side) ? "row" : "column";
+	};
+
+	_dockAppendBandChildren = (band, tab, divider, bandContent, side) => {
+		// 目的の並び: tab → divider → content（right/bottom） / content → divider → tab（left/top）
+		// ※タブは常にメイン側（ウィンドウ視点で内側）に寄せる
+		if (side === "right" || side === "bottom") {
+			band.append(tab);
+			band.append(divider);
+			band.append(bandContent);
+		} else {
+			band.append(bandContent);
+			band.append(divider);
+			band.append(tab);
+		}
+	};
+
+	_dockAppendSplitChildren = (split, main, band, side) => {
+		const order = (side === "left" || side === "top")
+			? [band, main]
+			: [main, band];
+		split.append(...order);
+	};
+
+	_dockMountSplit = (currentDockNode, split) => {
+		if (this.innerRoot.contains(currentDockNode)) {
+			currentDockNode.replaceWith(split);
+		} else {
+			this.innerRoot.append(split);
+		}
+	};
+
+	_dockCreateSplitNodes = (side) => {
+		const split = document.createElement("div");
+		split.classList.add("sweDockSplit");
+		split.classList.add(this._dockSplitAxisClass(side));
+
+		const main = document.createElement("div");
+		main.classList.add("sweDockMain");
+
+		const band = document.createElement("div");
+		band.classList.add("sweDockBand");
+		band.dataset.side = side;
+		band.dataset.autoHide = "inherit";
+
+		const tab = document.createElement("div");
+		tab.classList.add("sweDockTab");
+
+		const divider = document.createElement("div");
+		divider.classList.add("sweDockDivider");
+		divider.setAttribute("role", "separator");
+		divider.dataset.side = side;
+
+		const bandContent = document.createElement("div");
+		bandContent.classList.add("sweDockBandContent");
+
+		this._dockAppendBandChildren(band, tab, divider, bandContent, side);
+		this._dockAppendSplitChildren(split, main, band, side);
+
+		return { split, main, band, tab, divider, bandContent };
+	};
+
+	_dockGetBandFromNode = (node) => {
+		return node?.closest?.(".sweDockBand") ?? null;
+	};
+
+	_dockGetBandContent = (band) => {
+		return band?.querySelector?.(":scope > .sweDockBandContent") ?? null;
+	};
+
+	_dockGetSplitFromBand = (band) => {
+		return band?.closest?.(".sweDockSplit") ?? null;
+	};
+
+	_dockGetMainFromSplit = (split) => {
+		return split?.querySelector?.(":scope > .sweDockMain") ?? null;
+	};
+
+	_dockCollapseSplitIfNeeded = (split) => {
+		if (!split) return;
+		const main = this._dockGetMainFromSplit(split);
+		if (!main) return;
+		const survivor = main.firstElementChild;
+		if (survivor) {
+			split.replaceWith(survivor);
+		} else {
+			this.innerRoot?.append(this.floatLayer);
+			split.remove();
+		}
+		this._recomputeDockNode();
+	};
+
+	_dockResolveAutoHide = (band) => {
+		const mode = band?.dataset?.autoHide ?? "inherit";
+		return mode === "inherit" ? this._dockAutoHideDefault : mode === "true";
+	};
+
+	_dockBindUndockFromTab = (band) => {
+		const tab = band?.querySelector?.(":scope > .sweDockTab");
+		if (!tab || tab.__sweUndockBound) return;
+		tab.__sweUndockBound = true;
+		tab.addEventListener("pointerdown", (e) => {
+			if (!e.shiftKey) return;
+			e.preventDefault();
+			e.stopPropagation();
+			const bandContent = this._dockGetBandContent(band);
+			const fr = bandContent?.querySelector?.(":scope > .sweWindowFrame");
+			const child = fr?.sweWindow;
+			if (!child) return;
+			this.undockToFloat(child);
+		});
+	};
+
+	_dockBindAutoHideClick = (band) => {
+		const tab = band.querySelector(".sweDockTab");
+		if (!tab || tab.__sweClickBound) return;
+		tab.__sweClickBound = true;
+		tab.addEventListener("pointerdown", (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			band.classList.toggle("expanded");
+		});
+	};
+
+	_dockBindAutoHideHover = (band) => {
+		if (band.__sweHoverBound) return;
+		band.__sweHoverBound = true;
+		band.addEventListener("pointerenter", () => {
+			if (!band.classList.contains("autoHide")) return;
+			band.classList.add("expanded");
+		});
+		band.addEventListener("pointerleave", () => {
+			if (!band.classList.contains("autoHide")) return;
+			band.classList.remove("expanded");
+		});
+	};
+
 	ensureInnerDesktop = () => {
 		if (!this.wdNode || this.innerRoot) return;
 
@@ -733,60 +875,13 @@ class sweWindow {
 	_ensureDockSplit = (direction) => {
 		this.ensureInnerDesktop();
 		const current = this._dockNode;
-		const split = document.createElement("div");
-		split.classList.add("sweDockSplit");
-		split.classList.add(direction === "left" || direction === "right" ? "row" : "column");
-
-		const main = document.createElement("div");
-		main.classList.add("sweDockMain");
-
-		const band = document.createElement("div");
-		band.classList.add("sweDockBand");
-		band.dataset.side = direction;
-		band.dataset.autoHide = "inherit";
-
-		const tab = document.createElement("div");
-		tab.classList.add("sweDockTab");
-
-		const divider = document.createElement("div");
-		divider.classList.add("sweDockDivider");
-		divider.setAttribute("role", "separator");
-		divider.dataset.side = direction;
-
-		const content = document.createElement("div");
-		content.classList.add("sweDockBandContent");
-
-		// 目的の並び: tab → divider → content（right/bottom） / content → divider → tab（left/top）
-		// ※タブは常にメイン側（ウィンドウ視点で内側）に寄せる
-		if (direction === "right" || direction === "bottom") {
-			band.append(tab);
-			band.append(divider);
-			band.append(content);
-		} else {
-			band.append(content);
-			band.append(divider);
-			band.append(tab);
-		}
-
+		const { split, main, band, divider, bandContent } = this._dockCreateSplitNodes(direction);
 		main.append(current);
-
-		const order = (direction === "left" || direction === "top")
-			? [band, main]
-			: [main, band];
-		split.append(...order);
-
-		if (this.innerRoot.contains(current)) {
-			current.replaceWith(split);
-		} else {
-			this.innerRoot.append(split);
-		}
-
+		this._dockMountSplit(current, split);
 		this._dockNode = main;
-
-		this._attachDockDividerResize(divider, split, band, content, direction);
+		this._attachDockDividerResize(divider, split, band, bandContent, direction);
 		this._applyDockAutoHide(band);
-
-		return { split, main, band, bandContent: content };
+		return { split, main, band, bandContent };
 	};
 
 	_recomputeDockNode = () => {
@@ -809,70 +904,31 @@ class sweWindow {
 	_cleanupEmptyDockFrom = (node) => {
 		// node: a descendant of sweDockBand (usually bandContent)
 		if (!node) return;
-		const band = node.closest?.(".sweDockBand");
+		const band = this._dockGetBandFromNode(node);
 		if (!band) return;
-		const bandContent = band.querySelector(":scope > .sweDockBandContent");
+		const bandContent = this._dockGetBandContent(band);
 		if (!bandContent) return;
 		if (bandContent.children.length > 0) return;
-
-		const split = band.closest?.(".sweDockSplit");
+		const split = this._dockGetSplitFromBand(band);
 		if (!split) return;
-
-		const main = split.querySelector(":scope > .sweDockMain");
-		if (!main) return;
-
-		// Remove empty band, then collapse split into main's only child
 		band.remove();
-
-		const survivor = main.firstElementChild;
-		if (survivor) {
-			split.replaceWith(survivor);
-		} else {
-			// If somehow empty, restore float layer to innerRoot
-			this.innerRoot?.append(this.floatLayer);
-			split.remove();
-		}
-
-		this._recomputeDockNode();
+		this._dockCollapseSplitIfNeeded(split);
 	};
 
 	_applyDockAutoHide = (band) => {
-		const mode = band?.dataset?.autoHide ?? "inherit";
-		const resolved = mode === "inherit" ? this._dockAutoHideDefault : mode === "true";
+		this._dockBindUndockFromTab(band);
+		const resolved = this._dockResolveAutoHide(band);
 		band.classList.toggle("autoHide", !!resolved);
-
 		const trigger = this._dockAutoHideTrigger;
-		if (trigger === "click") {
-			const tab = band.querySelector(".sweDockTab");
-			if (tab && !tab.__sweClickBound) {
-				tab.__sweClickBound = true;
-				tab.addEventListener("pointerdown", (e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					band.classList.toggle("expanded");
-				});
-			}
-		}
-		else if (trigger === "hover") {
-			if (!band.__sweHoverBound) {
-				band.__sweHoverBound = true;
-				band.addEventListener("pointerenter", () => {
-					if (!band.classList.contains("autoHide")) return;
-					band.classList.add("expanded");
-				});
-				band.addEventListener("pointerleave", () => {
-					if (!band.classList.contains("autoHide")) return;
-					band.classList.remove("expanded");
-				});
-			}
-		}
+		if (trigger === "click") this._dockBindAutoHideClick(band);
+		else if (trigger === "hover") this._dockBindAutoHideHover(band);
 	};
 
 	_attachDockDividerResize = (divider, split, band, bandContent, side) => {
 		let dragging = false;
 		let start = 0;
 		let startSize = 0;
-		const isRow = side === "left" || side === "right";
+		const isRow = this._dockIsRowSide(side);
 		const bandMin = this.scInst?.config?.dock?.bandMin ?? 120;
 		const bandMax = this.scInst?.config?.dock?.bandMax ?? 600;
 		const mainMin = this.scInst?.config?.dock?.mainMin ?? 200;
@@ -955,6 +1011,9 @@ class sweWindow {
 		}
 
 		const { bandContent } = this._ensureDockSplit(side);
+
+		// Save the floating size before docking overwrites it with 100% sizing.
+		childWin._dockLastFloatRect = { ...(childWin.rect ?? {}) };
 		childWin.frNode.remove();
 		bandContent.append(childWin.frNode);
 		childWin.frNode.style.left = "0px";
@@ -966,7 +1025,9 @@ class sweWindow {
 
 		const tab = bandContent.closest(".sweDockBand")?.querySelector(".sweDockTab");
 		if (tab) tab.textContent = childWin.title || childWin.winid || "dock";
-		this._applyDockAutoHide(bandContent.closest(".sweDockBand"));
+		const band = bandContent.closest(".sweDockBand");
+		this._dockBindUndockFromTab(band);
+		this._applyDockAutoHide(band);
 		originParent?._cleanupEmptyDockFrom?.(originBandContent);
 		childWin.bringToFront?.();
 	};
@@ -982,6 +1043,13 @@ class sweWindow {
 		childWin.frNode.style.height = "";
 		childWin.frNode.remove();
 		this.floatLayer.append(childWin.frNode);
+
+		// Restore the floating size if available.
+		const r = childWin._dockLastFloatRect;
+		if (r && Number.isFinite(r.width) && Number.isFinite(r.height)) {
+			childWin.frNode.style.width = r.width + "px";
+			childWin.frNode.style.height = r.height + "px";
+		}
 		childWin._setFramePosInHostFromViewportRect(this.floatLayer, vr);
 		childWin._clampFrameIntoHost(this.floatLayer, 0);
 		this._cleanupEmptyDockFrom(fromBandContent);
