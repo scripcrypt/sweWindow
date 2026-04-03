@@ -912,6 +912,22 @@ pre {
 	content: "◀";
 }
 
+.sweDockBand.autoHide:not(.expanded)[data-side="left"] > .sweDockTab,
+.sweDockBand.autoHide:not(.expanded)[data-side="right"] > .sweDockTab {
+	width: 20px;
+	min-height: 45px;
+	padding: 0;
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="left"] > .sweDockTab::before,
+.sweDockBand.autoHide:not(.expanded)[data-side="right"] > .sweDockTab::before {
+	font-size: 8px;
+	line-height: 1;
+	display: block;
+	transform: scaleY(3);
+	transform-origin: center;
+}
+
 .sweDockBand.autoHide:not(.expanded)[data-side="top"] > .sweDockTab::before {
 	content: "▼";
 }
