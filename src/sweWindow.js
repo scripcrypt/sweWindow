@@ -1171,6 +1171,7 @@ class sweWindow {
 		if (direction === "top" || direction === "bottom") {
 			band.addEventListener("pointerenter", showTab);
 		} else {
+			band.addEventListener("pointerenter", bumpZ);
 			band.addEventListener("click", showTab);
 		}
 
