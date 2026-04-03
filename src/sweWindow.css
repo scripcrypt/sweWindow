@@ -56,8 +56,8 @@ html {
 }
 body {
 	margin: 0;
-	width: 100vw;
-	height: 100vh;
+	width: 100%;
+	height: 100%;
 	overflow: hidden;
 }
 h3 {
@@ -93,8 +93,8 @@ pre {
 	position: absolute;
 	top: 100px;
 	left: 100px;
-	width: calc(100vw - var(--width-padding));
-	height: calc(100vh - 200px);
+	width: calc(100% - var(--width-padding));
+	height: calc(100% - 200px);
 	background-color: rgb(34, 34, 34);
 	overflow: hidden;
 }
@@ -1027,6 +1027,7 @@ pre {
 	flex-direction: column;
 	align-items: stretch;
 	overflow: auto;
+	overscroll-behavior: contain;
 	scrollbar-gutter: stable;
 	scrollbar-width: none;
 	-ms-overflow-style: none;
