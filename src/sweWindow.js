@@ -1094,6 +1094,36 @@ class sweWindow {
 		this.setCurrentrect?.();
 	};
 
+	_teleportFrameToHostFromViewportRect = ({
+		host,
+		viewportRect,
+		bottomInset = 0,
+		originParent = null,
+		originBandContent = null,
+		cleanupOriginDock = false,
+		afterTeleport = null,
+		reorderZ = false,
+	} = {}) => {
+		if (!host || !this.frNode || !viewportRect) return;
+		this.frNode.classList.add("teleporting");
+		this.frNode.remove();
+		host.append(this.frNode);
+		if (typeof afterTeleport === "function") {
+			afterTeleport();
+		}
+		this._setFramePosInHostFromViewportRect(host, viewportRect);
+		this._clampFrameIntoHost(host, bottomInset);
+		if (cleanupOriginDock) {
+			originParent?._cleanupEmptyDockFrom?.(originBandContent);
+		}
+		if (reorderZ) {
+			this.scInst?.reorderZ?.(this, false);
+		}
+		requestAnimationFrame(() => {
+			this.frNode.classList.remove("teleporting");
+		});
+	};
+
 	_clampFrameIntoHost = (host, bottomInset = 0) => {
 		if (!host || !this.frNode) return;
 		const w = this.frNode.offsetWidth || this.rect?.width || 0;
@@ -1201,24 +1231,29 @@ class sweWindow {
 		const originBandContent = this.frNode?.closest?.(".sweDockBandContent");
 
 		const vr = this.frNode.getBoundingClientRect();
-		this.frNode.classList.add("teleporting");
-		this.frNode.remove();
 		const parentInDockContext = !!(
 			parentWin.frNode?.classList?.contains("docked") ||
 			parentWin.frNode?.classList?.contains("sweChildInDockBand")
 		);
-		if (parentInDockContext) {
-			const firstChildFrame = parentWin.floatLayer.querySelector(":scope > .sweWindowFrame");
-			if (firstChildFrame) {
-				parentWin.floatLayer.insertBefore(this.frNode, firstChildFrame);
-			} else {
-				parentWin.floatLayer.append(this.frNode);
-			}
-		} else {
-			parentWin.floatLayer.append(this.frNode);
-		}
-		this.parentWin = parentWin;
-		this._setChildInDockBandClass(this);
+		this._teleportFrameToHostFromViewportRect({
+			host: parentWin.floatLayer,
+			viewportRect: vr,
+			bottomInset: 0,
+			originParent,
+			originBandContent,
+			cleanupOriginDock: true,
+			afterTeleport: () => {
+				// Maintain previous insertion order behavior (dock-context stacks children at top).
+				if (parentInDockContext) {
+					const firstChildFrame = parentWin.floatLayer.querySelector(":scope > .sweWindowFrame");
+					if (firstChildFrame) {
+						parentWin.floatLayer.insertBefore(this.frNode, firstChildFrame);
+					}
+				}
+				this.parentWin = parentWin;
+				this._setChildInDockBandClass(this);
+			},
+		});
 
 		// If the parent is in a dock context, children should be laid out in flow (stacked).
 		// Avoid absolute positioning based on viewport rect, which can make the child cover the parent.
@@ -1253,13 +1288,8 @@ class sweWindow {
 			this.frNode.style.flex = "0 0 auto";
 			this.setCurrentrect?.();
 		} else {
-			this._setFramePosInHostFromViewportRect(parentWin.floatLayer, vr);
-			this._clampFrameIntoHost(parentWin.floatLayer, 0);
+			// Teleport helper already handled pos/clamp in float layer.
 		}
-		originParent?._cleanupEmptyDockFrom?.(originBandContent);
-		requestAnimationFrame(() => {
-			this.frNode.classList.remove("teleporting");
-		});
 	};
 
 	detachToScreen = () => {
@@ -1267,17 +1297,18 @@ class sweWindow {
 		const originParent = this.parentWin;
 		const originBandContent = this.frNode?.closest?.(".sweDockBandContent");
 		const vr = this.frNode.getBoundingClientRect();
-		this.frNode.classList.add("teleporting");
-		this.frNode.remove();
-		this.scInst.scNode.append(this.frNode);
-		this.parentWin = null;
-		this._setChildInDockBandClass(this);
-		this._setFramePosInHostFromViewportRect(this.scInst.scNode, vr);
-		this._clampFrameIntoHost(this.scInst.scNode, this.tbNode?.offsetHeight ?? 0);
-		originParent?._cleanupEmptyDockFrom?.(originBandContent);
-		this.scInst?.reorderZ?.(this, false);
-		requestAnimationFrame(() => {
-			this.frNode.classList.remove("teleporting");
+		this._teleportFrameToHostFromViewportRect({
+			host: this.scInst.scNode,
+			viewportRect: vr,
+			bottomInset: this.tbNode?.offsetHeight ?? 0,
+			originParent,
+			originBandContent,
+			cleanupOriginDock: true,
+			reorderZ: true,
+			afterTeleport: () => {
+				this.parentWin = null;
+				this._setChildInDockBandClass(this);
+			},
 		});
 	};
 
