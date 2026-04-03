@@ -597,6 +597,7 @@ class sweWindow {
 	_dockAutoHideDefault = false;
 	_dockAutoHideTrigger = "hover";
 	_dockOverlayZBase = 1000;
+	_dockOverlayBandZMax = 99999;
 	_dockInsetVarTop = "--sweDockInsetTop";
 	_dockInsetVarRight = "--sweDockInsetRight";
 	_dockInsetVarBottom = "--sweDockInsetBottom";
@@ -1150,7 +1151,7 @@ class sweWindow {
 			}
 			band.classList.add("sweDockFrontBand");
 			root.__sweOverlayZCounter = (root.__sweOverlayZCounter || this._dockOverlayZBase) + 1;
-			const z = String(root.__sweOverlayZCounter);
+			const z = String(Math.min(root.__sweOverlayZCounter, this._dockOverlayBandZMax));
 			band.style.zIndex = z;
 			const tab = this._dockGetTab(band);
 			if (tab) tab.style.zIndex = z;
