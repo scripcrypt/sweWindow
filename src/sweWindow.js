@@ -656,10 +656,34 @@ class sweWindow {
 
 		const bandContent = document.createElement("div");
 		bandContent.classList.add("sweDockBandContent");
+		this._dockBindBandContentWheelIsolation(band, bandContent);
 
 		this._dockAppendBandChildren(band, tab, divider, bandContent, side);
 
 		return { band, tab, divider, bandContent };
+	};
+
+	_dockBindBandContentWheelIsolation = (band, bandContent) => {
+		if (!bandContent || bandContent.__sweWheelIsolationBound) return;
+		bandContent.__sweWheelIsolationBound = true;
+		bandContent.addEventListener(
+			"wheel",
+			(e) => {
+				const side = band?.dataset?.side;
+				if (side !== "left" && side !== "right") return;
+				if (!e) return;
+				// Prevent wheel events (especially trackpad horizontal deltas) from panning the whole screen.
+				e.stopPropagation();
+				// Only intercept when the bandContent can actually scroll vertically.
+				const canScrollY = bandContent.scrollHeight > bandContent.clientHeight + 1;
+				if (!canScrollY) return;
+				// Manually scroll vertically and suppress any horizontal motion.
+				if (e.cancelable) e.preventDefault();
+				bandContent.scrollLeft = 0;
+				bandContent.scrollTop += e.deltaY;
+			},
+			{ passive: false }
+		);
 	};
 
 	_dockGetBandFromNode = (node) => {
