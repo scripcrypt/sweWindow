@@ -696,6 +696,20 @@ class sweWindow {
 		return Array.from(bandContent.querySelectorAll(":scope > .sweWindowFrame"));
 	};
 
+	_reparentFrameToHost = (childWin, host, insertBefore = null) => {
+		if (!childWin?.frNode || !host) return;
+		childWin.frNode.classList.add("teleporting");
+		childWin.frNode.remove();
+		if (insertBefore && insertBefore.parentElement === host) {
+			host.insertBefore(childWin.frNode, insertBefore);
+		} else {
+			host.append(childWin.frNode);
+		}
+		requestAnimationFrame(() => {
+			childWin.frNode.classList.remove("teleporting");
+		});
+	};
+
 	_dockResetFrameForDock = (childWin) => {
 		if (!childWin?.frNode) return;
 		childWin.frNode.style.transform = "";
@@ -1555,13 +1569,11 @@ class sweWindow {
 		// Prevent transition artifacts (from absolute top/left) that can look like overlaps.
 		const prevTransition = childWin.frNode.style.transition;
 		childWin.frNode.style.transition = "none";
-		childWin.frNode.remove();
 		// Insert directly under the overlapped docked block (drop target). If none, append.
-		if (insertAfterFrame && insertAfterFrame.parentElement === bandContent) {
-			bandContent.insertBefore(childWin.frNode, insertAfterFrame.nextSibling);
-		} else {
-			bandContent.append(childWin.frNode);
-		}
+		const insertBefore = (insertAfterFrame && insertAfterFrame.parentElement === bandContent)
+			? insertAfterFrame.nextSibling
+			: null;
+		this._reparentFrameToHost(childWin, bandContent, insertBefore);
 		this._dockApplyDockedInlineLayout(childWin);
 		const isHorizontalBand = side === "top" || side === "bottom";
 		if (isHorizontalBand) {
