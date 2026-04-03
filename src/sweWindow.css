@@ -53,12 +53,14 @@ html {
 	background-color: rgb(84, 84, 84);
 	font-family: 'Sawarabi Gothic', sans-serif;
 	overflow: hidden;
+	overscroll-behavior-x: none;
 }
 body {
 	margin: 0;
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
+	overscroll-behavior-x: none;
 }
 h3 {
 	line-height: 1;

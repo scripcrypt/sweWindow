@@ -66,6 +66,7 @@ class sweScreen {
 
 		this.scNode.classList.add("invisible");
 		this.scNode.sweScreen = this;
+		this._bindWheelPanGuard();
 
 		// .sweTaskbar がなければ作る
 		if (!this.scNode.querySelector(".sweTaskbar")) {
@@ -105,6 +106,27 @@ class sweScreen {
 		});
 
 		this.resizeScreenEvent();
+	};
+
+	_bindWheelPanGuard = () => {
+		if (this.__sweWheelPanGuardBound) return;
+		this.__sweWheelPanGuardBound = true;
+		window.addEventListener(
+			"wheel",
+			(e) => {
+				if (!e || !this.scNode) return;
+				if (!this.scNode.contains(e.target)) return;
+				// Allow dock band contents to manage wheel isolation.
+				if (e.target?.closest?.(".sweDockBandContent")) return;
+				const dx = Number(e.deltaX) || 0;
+				const dy = Number(e.deltaY) || 0;
+				if (Math.abs(dx) < 1) return;
+				if (Math.abs(dx) <= Math.abs(dy) * 0.6) return;
+				if (e.cancelable) e.preventDefault();
+				e.stopPropagation();
+			},
+			{ passive: false, capture: true }
+		);
 	};
 
 
