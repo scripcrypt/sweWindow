@@ -1173,9 +1173,19 @@ class sweWindow {
 			const cleanupAnim = () => {
 				band.removeEventListener("transitionend", onEnd);
 				band.classList.remove("sweDockCollapsing");
+				// Switch to collapsed state ONLY after the collapse animation finishes.
+				band.classList.remove("expanded");
+				band.classList.remove("sweDockArrowDelay");
+				if (band.__sweDockArrowDelayTimer != null) {
+					clearTimeout(band.__sweDockArrowDelayTimer);
+					band.__sweDockArrowDelayTimer = null;
+				}
 				if (isRow) band.style.width = "";
 				else band.style.height = "";
 				this._dockUpdateOverlayInsets();
+				// When collapsing an autoHide band, make sure the tab is visible.
+				band.classList.add("sweDockShowTab");
+				setTimeout(() => band.classList.remove("sweDockShowTab"), 280);
 			};
 			const onEnd = (e) => {
 				if (!e) return;
@@ -1183,15 +1193,10 @@ class sweWindow {
 				if (!isRow && e.propertyName !== "height") return;
 				cleanupAnim();
 			};
-			if (band.__sweDockArrowDelayTimer != null) {
-				clearTimeout(band.__sweDockArrowDelayTimer);
-				band.__sweDockArrowDelayTimer = null;
-			}
 			band.style.flex = "";
 			band.style.flexBasis = "";
 			band.classList.add("sweDockCollapsing");
-			band.classList.add("sweDockArrowDelay");
-			band.classList.remove("expanded");
+			// Keep 'expanded' during the animation to avoid showing collapsed arrow too early.
 			// Fix current size as an explicit pixel value so width/height transition can run.
 			if (isRow) band.style.width = curSize + "px";
 			else band.style.height = curSize + "px";
@@ -1205,13 +1210,6 @@ class sweWindow {
 				// In case transition doesn't fire (browser edge case), ensure cleanup.
 				setTimeout(cleanupAnim, 420);
 			});
-			band.__sweDockArrowDelayTimer = setTimeout(() => {
-				band.__sweDockArrowDelayTimer = null;
-				band.classList.remove("sweDockArrowDelay");
-			}, 300);
-			// When collapsing an autoHide band, make sure the tab is visible.
-			band.classList.add("sweDockShowTab");
-			setTimeout(() => band.classList.remove("sweDockShowTab"), 280);
 		}
 	};
 
