@@ -117,12 +117,11 @@ class sweScreen {
 			(e) => {
 				if (!e || !this.scNode) return;
 				if (!this.scNode.contains(e.target)) return;
-				// Allow dock band contents to manage wheel isolation.
-				if (e.target?.closest?.(".sweDockBandContent")) return;
 				const dx = Number(e.deltaX) || 0;
 				const dy = Number(e.deltaY) || 0;
-				if (Math.abs(dx) < 1) return;
-				if (Math.abs(dx) <= Math.abs(dy) * 0.6) return;
+				// Suppress horizontal pan gestures; keep vertical scrolling intact.
+				if (Math.abs(dx) < 0.5) return;
+				if (Math.abs(dx) <= Math.abs(dy) * 0.2) return;
 				if (e.cancelable) e.preventDefault();
 				e.stopPropagation();
 			},
@@ -140,6 +139,7 @@ class sweScreen {
 			const b = document.body;
 			if (de && de.scrollLeft) de.scrollLeft = 0;
 			if (b && b.scrollLeft) b.scrollLeft = 0;
+			if (window.scrollX) window.scrollTo(0, window.scrollY);
 		};
 		document.addEventListener(
 			"scroll",
