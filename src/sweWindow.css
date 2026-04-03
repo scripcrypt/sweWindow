@@ -914,8 +914,8 @@ pre {
 
 .sweDockBand.autoHide:not(.expanded)[data-side="left"] > .sweDockTab,
 .sweDockBand.autoHide:not(.expanded)[data-side="right"] > .sweDockTab {
-	width: 20px;
-	min-height: 45px;
+	width: 15px;
+	min-height: 40px;
 	padding: 0;
 }
 
@@ -1021,8 +1021,9 @@ pre {
 
 .sweDockBand.autoHide:not(.expanded)[data-side="left"] > .sweDockTab,
 .sweDockBand.autoHide:not(.expanded)[data-side="right"] > .sweDockTab {
-	min-height: calc(var(--dock-tab-size) * 3);
-	padding: 6px 0;
+	width: 15px;
+	min-height: 40px;
+	padding: 0;
 }
 
 .sweDockBand.autoHide:not(.expanded)[data-side="top"] > .sweDockTab {
