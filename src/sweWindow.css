@@ -608,6 +608,11 @@ pre {
 	z-index: var(--sweZOverlayDockBand);
 }
 
+.sweDockOverlayRoot > .sweDockBand.sweDockShowTab,
+.sweDockOverlayRoot > .sweDockBand.autoHide:not(.expanded) {
+	z-index: var(--sweZOverlayDockTab);
+}
+
 .sweDockOverlayRoot > .sweDockBand[data-side="left"] {
 	left: 0;
 	top: 0;
