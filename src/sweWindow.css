@@ -705,8 +705,8 @@ pre {
 
 .sweDockBand:not(.sweDockFrontBand)[data-side="left"] > .sweDockDivider::after,
 .sweDockBand:not(.sweDockFrontBand)[data-side="right"] > .sweDockDivider::after {
-	top: var(--sweDockInsetTop, 0px);
-	bottom: var(--sweDockInsetBottom, 0px);
+	top: clamp(0px, calc(var(--sweDockInsetTop, 0px) - 1px), 9999px);
+	bottom: clamp(0px, calc(var(--sweDockInsetBottom, 0px) - 1px), 9999px);
 	width: 1px;
 	left: 50%;
 	transform: translateX(-0.5px);
@@ -734,8 +734,8 @@ pre {
 
 .sweDockBand:not(.sweDockFrontBand)[data-side="top"] > .sweDockDivider::after,
 .sweDockBand:not(.sweDockFrontBand)[data-side="bottom"] > .sweDockDivider::after {
-	left: var(--sweDockInsetLeft, 0px);
-	right: var(--sweDockInsetRight, 0px);
+	left: clamp(0px, calc(var(--sweDockInsetLeft, 0px) - 1px), 9999px);
+	right: clamp(0px, calc(var(--sweDockInsetRight, 0px) - 1px), 9999px);
 	height: 1px;
 	top: 50%;
 	transform: translateY(-0.5px);
