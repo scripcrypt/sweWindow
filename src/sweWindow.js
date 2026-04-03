@@ -596,7 +596,7 @@ class sweWindow {
 	_dockNode = null;
 	_dockAutoHideDefault = false;
 	_dockAutoHideTrigger = "hover";
-	_dockOverlayZBase = 200;
+	_dockOverlayZBase = 1000;
 	_dockInsetVarTop = "--sweDockInsetTop";
 	_dockInsetVarRight = "--sweDockInsetRight";
 	_dockInsetVarBottom = "--sweDockInsetBottom";
@@ -1143,20 +1143,17 @@ class sweWindow {
 		const bumpZ = () => {
 			const root = this._dockGetOverlayRoot();
 			if (!root) return;
-			// Keep the last interacted band above other bands by DOM order, while
-			// leaving floatLayer above bands via z-index.
-			if (band.parentElement === root) {
-				band.remove();
-				root.append(band);
-			}
+			// Keep the last interacted band above other bands using z-index (avoid DOM reorder).
+			// floatLayer stays above all bands via CSS z-index.
 			for (const b of root.querySelectorAll(":scope > .sweDockBand.sweDockFrontBand")) {
 				if (b !== band) b.classList.remove("sweDockFrontBand");
 			}
 			band.classList.add("sweDockFrontBand");
-			// Keep tab stacking above the content layer.
 			root.__sweOverlayZCounter = (root.__sweOverlayZCounter || this._dockOverlayZBase) + 1;
+			const z = String(root.__sweOverlayZCounter);
+			band.style.zIndex = z;
 			const tab = this._dockGetTab(band);
-			if (tab) tab.style.zIndex = String(root.__sweOverlayZCounter);
+			if (tab) tab.style.zIndex = z;
 		};
 
 		const showTab = () => {
