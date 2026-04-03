@@ -1362,6 +1362,15 @@ class sweWindow {
 				if (tab) tab.style.zIndex = "";
 				return;
 			}
+			// autoHide expanded tabs can appear via CSS :hover without sweDockShowTab.
+			// Never allow autoHide bands to be assigned a low inline z-index that falls under floatLayer.
+			if (band.classList.contains("autoHide")) {
+				const z = String(getTabZ());
+				band.style.zIndex = z;
+				const tab = this._dockGetTab(band);
+				if (tab) tab.style.zIndex = z;
+				return;
+			}
 			// When the tab is intended to be visible, force the band above floatLayer.
 			if (band.classList.contains("sweDockShowTab")) {
 				const z = String(getTabZ());
