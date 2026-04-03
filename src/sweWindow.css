@@ -53,16 +53,12 @@ html {
 	background-color: rgb(84, 84, 84);
 	font-family: 'Sawarabi Gothic', sans-serif;
 	overflow: hidden;
-	scrollbar-gutter: stable;
-	overscroll-behavior: none;
 }
 body {
 	margin: 0;
-	width: 100vw;
-	height: 100vh;
+	width: 100%;
+	height: 100%;
 	overflow: hidden;
-	scrollbar-gutter: stable;
-	overscroll-behavior: none;
 }
 h3 {
 	line-height: 1;
@@ -97,8 +93,8 @@ pre {
 	position: absolute;
 	top: 100px;
 	left: 100px;
-	width: calc(100vw - var(--width-padding));
-	height: calc(100vh - 200px);
+	width: calc(100% - var(--width-padding));
+	height: calc(100% - 200px);
 	background-color: rgb(34, 34, 34);
 	overflow: hidden;
 }
