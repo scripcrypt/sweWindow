@@ -1147,6 +1147,15 @@ pre {
 	height: var(--dock-tab-size);
 }
 
+.sweDockBand.autoHide {
+	transition: width 260ms ease, height 260ms ease;
+}
+
+.sweDockBand.autoHide.sweDockResizing,
+.sweDockBand.autoHide.sweDockAutoHideResizing {
+	transition: none;
+}
+
 .sweDockBand.autoHide[data-side="left"]:hover,
 .sweDockBand.autoHide[data-side="right"]:hover,
 .sweDockBand.autoHide[data-side="top"]:hover,
