@@ -36,6 +36,11 @@
 	--sweWindow-header-button-close-hover: rgb(251, 8, 8);
 	--windowTypeIcons-normal: \e835;
 	--width-padding: 200px;
+	--sweZOverlayFloatLayer: 1;
+	--sweZOverlayDockBand: 100;
+	--sweZOverlayDockDivider: 80;
+	--sweZOverlayDockTab: 200;
+	--sweZWindowDrag: 10000;
 }
 .target-element {
 	touch-action: none;
@@ -174,13 +179,13 @@ pre {
 	will-change: transform, left, top;
 	transition: none !important;
 	box-shadow: none;
-	z-index: 10000 !important;
+	z-index: var(--sweZWindowDrag) !important;
 }
 .sweWindowFrame.resizing {
 	will-change: width, height, left, top;
 	box-shadow: none !important;
 	transition: none !important;
-	z-index: 10000 !important;
+	z-index: var(--sweZWindowDrag) !important;
 }
 .sweWindowFrame.teleporting {
 	transition: none !important;
@@ -588,7 +593,7 @@ pre {
 	height: auto;
 	overflow: hidden;
 	pointer-events: none;
-	z-index: 1;
+	z-index: var(--sweZOverlayFloatLayer);
  }
 
  .sweDockOverlayRoot > .sweFloatLayer > .sweWindowFrame {
@@ -598,7 +603,7 @@ pre {
 .sweDockOverlayRoot > .sweDockBand {
 	position: absolute;
 	pointer-events: auto;
-	z-index: 100;
+	z-index: var(--sweZOverlayDockBand);
 }
 
 .sweDockOverlayRoot > .sweDockBand[data-side="left"] {
@@ -682,7 +687,7 @@ pre {
 	touch-action: none;
 	user-select: none;
 	position: relative;
-	z-index: 80;
+	z-index: var(--sweZOverlayDockDivider);
 	min-width: 8px;
 	min-height: 8px;
 	align-self: stretch;
@@ -795,7 +800,7 @@ pre {
 	align-items: center;
 	justify-content: center;
 	position: absolute;
-	z-index: 200;
+	z-index: var(--sweZOverlayDockTab);
 	background: rgb(20, 20, 20);
 	color: rgba(255, 255, 255, 0.9);
 	font-size: 12px;
