@@ -795,6 +795,39 @@ class sweWindow {
 		return Array.from(bandContent.querySelectorAll(":scope > .sweWindowFrame"));
 	};
 
+	_dockAnimateScrollTo = (el, { top = null, left = null, durationMs = 180 } = {}) => {
+		if (!el) return;
+		const startTop = el.scrollTop;
+		const startLeft = el.scrollLeft;
+		const targetTop = top == null ? startTop : top;
+		const targetLeft = left == null ? startLeft : left;
+		const dx = targetLeft - startLeft;
+		const dy = targetTop - startTop;
+		if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+
+		if (el.__sweDockScrollAnim?.rafId) {
+			cancelAnimationFrame(el.__sweDockScrollAnim.rafId);
+		}
+		const anim = {
+			start: performance.now(),
+			rafId: 0,
+		};
+		el.__sweDockScrollAnim = anim;
+
+		const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+		const step = (now) => {
+			if (el.__sweDockScrollAnim !== anim) return;
+			const t = Math.min(1, Math.max(0, (now - anim.start) / Math.max(1, durationMs)));
+			const k = easeOutCubic(t);
+			if (left != null) el.scrollLeft = startLeft + dx * k;
+			if (top != null) el.scrollTop = startTop + dy * k;
+			if (t < 1) {
+				anim.rafId = requestAnimationFrame(step);
+			}
+		};
+		anim.rafId = requestAnimationFrame(step);
+	};
+
 	_dockScrollFrameIntoBandView = (bandContent, frame, side, behavior = "smooth") => {
 		if (!bandContent || !frame) return;
 		const isHorizontalBand = side === "top" || side === "bottom";
@@ -808,8 +841,8 @@ class sweWindow {
 				left = fr.left - br.left + bandContent.scrollLeft;
 			}
 			left = Math.max(0, Math.min(left, Math.max(0, bandContent.scrollWidth - bandContent.clientWidth)));
-			if (behavior === "auto") bandContent.scrollLeft = left;
-			bandContent.scrollTo({ left, behavior });
+			if (behavior === "smooth") this._dockAnimateScrollTo(bandContent, { left });
+			else bandContent.scrollLeft = left;
 		} else {
 			let top = 0;
 			if (frame.parentElement === bandContent) {
@@ -820,8 +853,8 @@ class sweWindow {
 				top = fr.top - br.top + bandContent.scrollTop;
 			}
 			top = Math.max(0, Math.min(top, Math.max(0, bandContent.scrollHeight - bandContent.clientHeight)));
-			if (behavior === "auto") bandContent.scrollTop = top;
-			bandContent.scrollTo({ top, behavior });
+			if (behavior === "smooth") this._dockAnimateScrollTo(bandContent, { top });
+			else bandContent.scrollTop = top;
 			// Side bands should never introduce horizontal scrolling.
 			bandContent.scrollLeft = 0;
 		}
