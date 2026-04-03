@@ -1143,7 +1143,13 @@ class sweWindow {
 		const bumpZ = () => {
 			const root = this._dockGetOverlayRoot();
 			if (!root) return;
-			// Keep any inline z-index above the overlay content layer.
+			// Keep the last interacted band above other bands by DOM order, while
+			// leaving floatLayer above bands via z-index.
+			if (band.parentElement === root) {
+				band.remove();
+				root.append(band);
+			}
+			// Keep tab stacking above the content layer.
 			root.__sweOverlayZCounter = (root.__sweOverlayZCounter || this._dockOverlayZBase) + 1;
 			const tab = this._dockGetTab(band);
 			if (tab) tab.style.zIndex = String(root.__sweOverlayZCounter);
