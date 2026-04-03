@@ -596,6 +596,11 @@ class sweWindow {
 	_dockNode = null;
 	_dockAutoHideDefault = false;
 	_dockAutoHideTrigger = "hover";
+	_dockOverlayZBase = 200;
+	_dockInsetVarTop = "--sweDockInsetTop";
+	_dockInsetVarRight = "--sweDockInsetRight";
+	_dockInsetVarBottom = "--sweDockInsetBottom";
+	_dockInsetVarLeft = "--sweDockInsetLeft";
 
 	/*--------------------------------------------------
 		Internal Desktop / Docking
@@ -1124,7 +1129,7 @@ class sweWindow {
 			const root = this._dockGetOverlayRoot();
 			if (!root) return;
 			// Keep any inline z-index above the overlay content layer.
-			root.__sweOverlayZCounter = (root.__sweOverlayZCounter || 200) + 1;
+			root.__sweOverlayZCounter = (root.__sweOverlayZCounter || this._dockOverlayZBase) + 1;
 			band.style.zIndex = String(root.__sweOverlayZCounter);
 		};
 
@@ -1162,10 +1167,10 @@ class sweWindow {
 			if (side === "left" || side === "right") return band.offsetWidth || 0;
 			return band.offsetHeight || 0;
 		};
-		overlay.style.setProperty("--sweDockInsetTop", getInset("top") + "px");
-		overlay.style.setProperty("--sweDockInsetRight", getInset("right") + "px");
-		overlay.style.setProperty("--sweDockInsetBottom", getInset("bottom") + "px");
-		overlay.style.setProperty("--sweDockInsetLeft", getInset("left") + "px");
+		overlay.style.setProperty(this._dockInsetVarTop, getInset("top") + "px");
+		overlay.style.setProperty(this._dockInsetVarRight, getInset("right") + "px");
+		overlay.style.setProperty(this._dockInsetVarBottom, getInset("bottom") + "px");
+		overlay.style.setProperty(this._dockInsetVarLeft, getInset("left") + "px");
 	};
 
 	_setFramePosInHostFromViewportRect = (host, viewportRect) => {
