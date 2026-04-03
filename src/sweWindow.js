@@ -1348,9 +1348,28 @@ class sweWindow {
 		band.__sweOverlayZBound = true;
 		let leaveTimer = null;
 		const isCollapsedAutoHide = () => band.classList.contains("autoHide") && !band.classList.contains("expanded");
+		const getTabZ = () => {
+			const raw = getComputedStyle(document.documentElement).getPropertyValue("--sweZOverlayDockTab");
+			const n = Number.parseFloat(raw);
+			return Number.isFinite(n) ? n : 200000;
+		};
 
 		const bumpZ = () => {
-			if (isCollapsedAutoHide()) return;
+			// Collapsed autoHide should follow CSS z-index rules (and must not keep stale inline z-index).
+			if (isCollapsedAutoHide()) {
+				band.style.zIndex = "";
+				const tab = this._dockGetTab(band);
+				if (tab) tab.style.zIndex = "";
+				return;
+			}
+			// When the tab is intended to be visible, force the band above floatLayer.
+			if (band.classList.contains("sweDockShowTab")) {
+				const z = String(getTabZ());
+				band.style.zIndex = z;
+				const tab = this._dockGetTab(band);
+				if (tab) tab.style.zIndex = z;
+				return;
+			}
 			const root = this._dockGetOverlayRoot?.();
 			if (!root) return;
 			// Keep the last interacted band above other bands using z-index (avoid DOM reorder).
