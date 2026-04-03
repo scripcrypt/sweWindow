@@ -1165,12 +1165,37 @@ class sweWindow {
 				width: band.style.width,
 				height: band.style.height,
 			};
+			const side = band?.dataset?.side;
+			const isRow = side === "left" || side === "right";
+			const curSize = isRow ? (band.offsetWidth || 0) : (band.offsetHeight || 0);
+			const tabSizeRaw = getComputedStyle(band).getPropertyValue("--dock-tab-size");
+			const tabSize = Number.parseFloat(tabSizeRaw) || 20;
+			const cleanupAnim = () => {
+				band.removeEventListener("transitionend", onEnd);
+				if (isRow) band.style.width = "";
+				else band.style.height = "";
+				this._dockUpdateOverlayInsets();
+			};
+			const onEnd = (e) => {
+				if (!e) return;
+				if (isRow && e.propertyName !== "width") return;
+				if (!isRow && e.propertyName !== "height") return;
+				cleanupAnim();
+			};
 			band.style.flex = "";
 			band.style.flexBasis = "";
-			band.style.width = "";
-			band.style.height = "";
 			band.classList.remove("expanded");
-			this._dockUpdateOverlayInsets();
+			// Fix current size as an explicit pixel value so width/height transition can run.
+			if (isRow) band.style.width = curSize + "px";
+			else band.style.height = curSize + "px";
+			band.addEventListener("transitionend", onEnd);
+			// Trigger transition to collapsed tab size.
+			requestAnimationFrame(() => {
+				if (isRow) band.style.width = tabSize + "px";
+				else band.style.height = tabSize + "px";
+				// In case transition doesn't fire (browser edge case), ensure cleanup.
+				setTimeout(cleanupAnim, 420);
+			});
 			// When collapsing an autoHide band, make sure the tab is visible.
 			band.classList.add("sweDockShowTab");
 			setTimeout(() => band.classList.remove("sweDockShowTab"), 280);
