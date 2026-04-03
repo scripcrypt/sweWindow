@@ -1328,8 +1328,11 @@ class sweWindow {
 		if (!band || band.__sweOverlayZBound) return;
 		band.__sweOverlayZBound = true;
 		let leaveTimer = null;
+		const isCollapsedAutoHide = () => band.classList.contains("autoHide") && !band.classList.contains("expanded");
+
 		const bumpZ = () => {
-			const root = this._dockGetOverlayRoot();
+			if (isCollapsedAutoHide()) return;
+			const root = this._dockGetOverlayRoot?.();
 			if (!root) return;
 			// Keep the last interacted band above other bands using z-index (avoid DOM reorder).
 			// floatLayer stays above all bands via CSS z-index.
@@ -1345,6 +1348,7 @@ class sweWindow {
 		};
 
 		const showTab = () => {
+			if (isCollapsedAutoHide()) return;
 			bumpZ();
 			if (leaveTimer) {
 				clearTimeout(leaveTimer);
