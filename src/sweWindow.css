@@ -1003,6 +1003,12 @@ pre {
 	transform: translateY(-50%);
 }
 
+.sweDockBand.autoHide:not(.expanded)[data-side="left"] > .sweDockTab,
+.sweDockBand.autoHide:not(.expanded)[data-side="right"] > .sweDockTab {
+	min-height: calc(var(--dock-tab-size) * 3);
+	padding: 6px 0;
+}
+
 .sweDockBand.autoHide:not(.expanded)[data-side="top"] > .sweDockTab {
 	left: 50%;
 	right: auto;
@@ -1156,6 +1162,7 @@ pre {
 }
 
 .sweDockBand.autoHide {
+	/* autoHide expand/collapse animation speed (tweak here) */
 	transition: width 260ms ease, height 260ms ease;
 }
 
