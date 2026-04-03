@@ -1116,6 +1116,42 @@ class sweWindow {
 		return this.overlayRoot || this.innerRoot;
 	};
 
+	_dockBindOverlayBandZBump = (band, direction) => {
+		if (!band || band.__sweOverlayZBound) return;
+		band.__sweOverlayZBound = true;
+		let leaveTimer = null;
+		const bumpZ = () => {
+			const root = this._dockGetOverlayRoot();
+			if (!root) return;
+			// Keep any inline z-index above the overlay content layer.
+			root.__sweOverlayZCounter = (root.__sweOverlayZCounter || 200) + 1;
+			band.style.zIndex = String(root.__sweOverlayZCounter);
+		};
+
+		const showTab = () => {
+			bumpZ();
+			if (leaveTimer) {
+				clearTimeout(leaveTimer);
+				leaveTimer = null;
+			}
+			band.classList.add("sweDockShowTab");
+		};
+
+		if (direction === "top" || direction === "bottom") {
+			band.addEventListener("pointerenter", showTab);
+		} else {
+			band.addEventListener("click", showTab);
+		}
+
+		band.addEventListener("pointerleave", () => {
+			if (leaveTimer) clearTimeout(leaveTimer);
+			leaveTimer = setTimeout(() => {
+				leaveTimer = null;
+				band.classList.remove("sweDockShowTab");
+			}, 120);
+		});
+	};
+
 	_dockUpdateOverlayInsets = () => {
 		const overlay = this._dockGetOverlayRoot();
 		if (!overlay) return;
@@ -1369,51 +1405,7 @@ class sweWindow {
 		let bandContent = band ? this._dockGetBandContent(band) : null;
 		if (band && bandContent) {
 			this._dockNode = overlay;
-			if (!band.__sweOverlayZBound) {
-				band.__sweOverlayZBound = true;
-				let leaveTimer = null;
-				const bumpZ = () => {
-					const root = this._dockGetOverlayRoot();
-					if (!root) return;
-					// Keep any inline z-index above the overlay content layer.
-					root.__sweOverlayZCounter = (root.__sweOverlayZCounter || 200) + 1;
-					band.style.zIndex = String(root.__sweOverlayZCounter);
-				};
-
-				if (direction === "top" || direction === "bottom") {
-					band.addEventListener("pointerenter", () => {
-						bumpZ();
-						if (leaveTimer) {
-							clearTimeout(leaveTimer);
-							leaveTimer = null;
-						}
-						band.classList.add("sweDockShowTab");
-					});
-					band.addEventListener("pointerleave", () => {
-						if (leaveTimer) clearTimeout(leaveTimer);
-						leaveTimer = setTimeout(() => {
-							leaveTimer = null;
-							band.classList.remove("sweDockShowTab");
-						}, 120);
-					});
-				} else {
-					band.addEventListener("click", () => {
-						bumpZ();
-						if (leaveTimer) {
-							clearTimeout(leaveTimer);
-							leaveTimer = null;
-						}
-						band.classList.add("sweDockShowTab");
-					});
-					band.addEventListener("pointerleave", () => {
-						if (leaveTimer) clearTimeout(leaveTimer);
-						leaveTimer = setTimeout(() => {
-							leaveTimer = null;
-							band.classList.remove("sweDockShowTab");
-						}, 120);
-					});
-				}
-			}
+			this._dockBindOverlayBandZBump(band, direction);
 			this._dockUpdateOverlayInsets();
 			return { band, bandContent };
 		}
@@ -1434,44 +1426,7 @@ class sweWindow {
 		}
 
 		overlay.append(band);
-		if (!band.__sweOverlayZBound) {
-			band.__sweOverlayZBound = true;
-			let leaveTimer = null;
-			const bumpZ = () => {
-				const root = this._dockGetOverlayRoot();
-				if (!root) return;
-				root.__sweOverlayZCounter = (root.__sweOverlayZCounter || 200) + 1;
-				band.style.zIndex = String(root.__sweOverlayZCounter);
-			};
-
-			if (direction === "top" || direction === "bottom") {
-				band.addEventListener("pointerenter", () => {
-					bumpZ();
-					if (leaveTimer) {
-						clearTimeout(leaveTimer);
-						leaveTimer = null;
-					}
-					band.classList.add("sweDockShowTab");
-				});
-			} else {
-				band.addEventListener("click", () => {
-					bumpZ();
-					if (leaveTimer) {
-						clearTimeout(leaveTimer);
-						leaveTimer = null;
-					}
-					band.classList.add("sweDockShowTab");
-				});
-			}
-
-			band.addEventListener("pointerleave", () => {
-				if (leaveTimer) clearTimeout(leaveTimer);
-				leaveTimer = setTimeout(() => {
-					leaveTimer = null;
-					band.classList.remove("sweDockShowTab");
-				}, 120);
-			});
-		}
+		this._dockBindOverlayBandZBump(band, direction);
 		this._dockNode = overlay;
 		this._attachDockDividerResize(divider, null, band, bandContent, direction);
 		this._applyDockAutoHide(band);
