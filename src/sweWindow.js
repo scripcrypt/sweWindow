@@ -689,6 +689,12 @@ class sweWindow {
 		}
 	};
 
+	_setChildParentAndDockBandClass = (childWin, parentWin) => {
+		if (!childWin) return;
+		childWin.parentWin = parentWin;
+		this._setChildInDockBandClass(childWin);
+	};
+
 	_dockGetBandContent = (band) => {
 		return band?.querySelector?.(":scope > .sweDockBandContent") ?? null;
 	};
@@ -1338,8 +1344,7 @@ class sweWindow {
 						parentWin.floatLayer.insertBefore(this.frNode, firstChildFrame);
 					}
 				}
-				this.parentWin = parentWin;
-				this._setChildInDockBandClass(this);
+				this._setChildParentAndDockBandClass(this, parentWin);
 			},
 		});
 
@@ -1394,8 +1399,7 @@ class sweWindow {
 			cleanupOriginDock: true,
 			reorderZ: true,
 			afterTeleport: () => {
-				this.parentWin = null;
-				this._setChildInDockBandClass(this);
+				this._setChildParentAndDockBandClass(this, null);
 			},
 		});
 	};
@@ -1668,7 +1672,7 @@ class sweWindow {
 			originBandContent: fromBandContent,
 			cleanupOriginDock: true,
 			afterTeleport: () => {
-				childWin._setChildInDockBandClass?.(childWin);
+				this._setChildParentAndDockBandClass(childWin, this);
 				if (fromBand) {
 					this._dockRefreshTabPresentation(fromBand);
 				}
