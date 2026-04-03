@@ -1171,10 +1171,12 @@ pre {
 }
 
 .sweDockBand.autoHide.sweDockCollapsing > .sweDockTab::before {
+	content: none !important;
 	opacity: 0;
 }
 
 .sweDockBand.autoHide.sweDockArrowDelay > .sweDockTab::before {
+	content: none !important;
 	opacity: 0;
 }
 
