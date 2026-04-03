@@ -574,13 +574,21 @@ pre {
 	position: absolute;
 	inset: 0;
 	pointer-events: auto;
-}
+	isolation: isolate;
+ }
  
 .sweDockOverlayRoot > .sweFloatLayer {
 	position: absolute;
-	inset: 0;
+	inset:
+		var(--sweDockInsetTop, 0px)
+		var(--sweDockInsetRight, 0px)
+		var(--sweDockInsetBottom, 0px)
+		var(--sweDockInsetLeft, 0px);
+	width: auto;
+	height: auto;
+	overflow: hidden;
 	pointer-events: none;
-	z-index: 80;
+	z-index: 1;
  }
 
  .sweDockOverlayRoot > .sweFloatLayer > .sweWindowFrame {
@@ -590,7 +598,7 @@ pre {
 .sweDockOverlayRoot > .sweDockBand {
 	position: absolute;
 	pointer-events: auto;
-	z-index: 40;
+	z-index: 100;
 }
 
 .sweDockOverlayRoot > .sweDockBand[data-side="left"] {
@@ -787,7 +795,7 @@ pre {
 	align-items: center;
 	justify-content: center;
 	position: absolute;
-	z-index: 6;
+	z-index: 200;
 	background: rgb(20, 20, 20);
 	color: rgba(255, 255, 255, 0.9);
 	font-size: 12px;

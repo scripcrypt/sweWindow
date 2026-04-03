@@ -638,6 +638,7 @@ class sweWindow {
 		band.classList.add("sweDockBand");
 		band.dataset.side = side;
 		band.dataset.autoHide = "false";
+		band.style.zIndex = "";
 
 		const tab = document.createElement("div");
 		tab.classList.add("sweDockTab");
@@ -708,6 +709,8 @@ class sweWindow {
 
 	_reparentFrameToHost = (childWin, host, insertBefore = null) => {
 		if (!childWin?.frNode || !host) return;
+		// Reparenting should not carry over drag-transform based presentation.
+		this._clearFrameInteractionState(childWin, { clearTeleporting: false });
 		childWin.frNode.classList.add("teleporting");
 		childWin.frNode.remove();
 		if (insertBefore && insertBefore.parentElement === host) {
@@ -968,6 +971,7 @@ class sweWindow {
 		const isAutoHide = band.classList.contains("autoHide");
 		if (!isAutoHide) {
 			band.classList.toggle("expanded", !!expanded);
+			this._dockUpdateOverlayInsets();
 			return;
 		}
 
@@ -980,19 +984,24 @@ class sweWindow {
 				if (saved.height != null) band.style.height = saved.height;
 			}
 			band.classList.add("expanded");
+			this._dockUpdateOverlayInsets();
 		} else {
 			// Save last expanded inline sizing and clear it so collapsed CSS (tab-size) can take effect.
 			band.__sweAutoHideExpandedStyle = {
-				flex: band.style.flex || null,
-				flexBasis: band.style.flexBasis || null,
-				width: band.style.width || null,
-				height: band.style.height || null,
+				flex: band.style.flex,
+				flexBasis: band.style.flexBasis,
+				width: band.style.width,
+				height: band.style.height,
 			};
 			band.style.flex = "";
 			band.style.flexBasis = "";
 			band.style.width = "";
 			band.style.height = "";
 			band.classList.remove("expanded");
+			this._dockUpdateOverlayInsets();
+			// When collapsing an autoHide band, make sure the tab is visible.
+			band.classList.add("sweDockShowTab");
+			setTimeout(() => band.classList.remove("sweDockShowTab"), 280);
 		}
 	};
 
@@ -1105,6 +1114,22 @@ class sweWindow {
 
 	_dockGetOverlayRoot = () => {
 		return this.overlayRoot || this.innerRoot;
+	};
+
+	_dockUpdateOverlayInsets = () => {
+		const overlay = this._dockGetOverlayRoot();
+		if (!overlay) return;
+		const getInset = (side) => {
+			const band = overlay.querySelector?.(`:scope > .sweDockBand[data-side="${side}"]`) ?? null;
+			if (!band) return 0;
+			if (band.classList.contains("autoHide") && !band.classList.contains("expanded")) return 0;
+			if (side === "left" || side === "right") return band.offsetWidth || 0;
+			return band.offsetHeight || 0;
+		};
+		overlay.style.setProperty("--sweDockInsetTop", getInset("top") + "px");
+		overlay.style.setProperty("--sweDockInsetRight", getInset("right") + "px");
+		overlay.style.setProperty("--sweDockInsetBottom", getInset("bottom") + "px");
+		overlay.style.setProperty("--sweDockInsetLeft", getInset("left") + "px");
 	};
 
 	_setFramePosInHostFromViewportRect = (host, viewportRect) => {
@@ -1347,27 +1372,49 @@ class sweWindow {
 			if (!band.__sweOverlayZBound) {
 				band.__sweOverlayZBound = true;
 				let leaveTimer = null;
-				band.addEventListener("pointerenter", () => {
+				const bumpZ = () => {
 					const root = this._dockGetOverlayRoot();
 					if (!root) return;
-					// Bring to front by z-index (avoid DOM reordering which can reset scroll position)
-					root.__sweOverlayZCounter = (root.__sweOverlayZCounter || 20) + 1;
+					// Keep any inline z-index above the overlay content layer.
+					root.__sweOverlayZCounter = (root.__sweOverlayZCounter || 200) + 1;
 					band.style.zIndex = String(root.__sweOverlayZCounter);
-					if (leaveTimer) {
-						clearTimeout(leaveTimer);
-						leaveTimer = null;
-					}
-					band.classList.add("sweDockShowTab");
-				});
-				band.addEventListener("pointerleave", () => {
-					if (leaveTimer) clearTimeout(leaveTimer);
-					leaveTimer = setTimeout(() => {
-						leaveTimer = null;
-						band.classList.remove("sweDockShowTab");
-					}, 120);
-				});
+				};
+
+				if (direction === "top" || direction === "bottom") {
+					band.addEventListener("pointerenter", () => {
+						bumpZ();
+						if (leaveTimer) {
+							clearTimeout(leaveTimer);
+							leaveTimer = null;
+						}
+						band.classList.add("sweDockShowTab");
+					});
+					band.addEventListener("pointerleave", () => {
+						if (leaveTimer) clearTimeout(leaveTimer);
+						leaveTimer = setTimeout(() => {
+							leaveTimer = null;
+							band.classList.remove("sweDockShowTab");
+						}, 120);
+					});
+				} else {
+					band.addEventListener("click", () => {
+						bumpZ();
+						if (leaveTimer) {
+							clearTimeout(leaveTimer);
+							leaveTimer = null;
+						}
+						band.classList.add("sweDockShowTab");
+					});
+					band.addEventListener("pointerleave", () => {
+						if (leaveTimer) clearTimeout(leaveTimer);
+						leaveTimer = setTimeout(() => {
+							leaveTimer = null;
+							band.classList.remove("sweDockShowTab");
+						}, 120);
+					});
+				}
 			}
-			this._applyDockAutoHide(band);
+			this._dockUpdateOverlayInsets();
 			return { band, bandContent };
 		}
 
@@ -1390,17 +1437,33 @@ class sweWindow {
 		if (!band.__sweOverlayZBound) {
 			band.__sweOverlayZBound = true;
 			let leaveTimer = null;
-			band.addEventListener("pointerenter", () => {
+			const bumpZ = () => {
 				const root = this._dockGetOverlayRoot();
 				if (!root) return;
-				root.__sweOverlayZCounter = (root.__sweOverlayZCounter || 20) + 1;
+				root.__sweOverlayZCounter = (root.__sweOverlayZCounter || 200) + 1;
 				band.style.zIndex = String(root.__sweOverlayZCounter);
-				if (leaveTimer) {
-					clearTimeout(leaveTimer);
-					leaveTimer = null;
-				}
-				band.classList.add("sweDockShowTab");
-			});
+			};
+
+			if (direction === "top" || direction === "bottom") {
+				band.addEventListener("pointerenter", () => {
+					bumpZ();
+					if (leaveTimer) {
+						clearTimeout(leaveTimer);
+						leaveTimer = null;
+					}
+					band.classList.add("sweDockShowTab");
+				});
+			} else {
+				band.addEventListener("click", () => {
+					bumpZ();
+					if (leaveTimer) {
+						clearTimeout(leaveTimer);
+						leaveTimer = null;
+					}
+					band.classList.add("sweDockShowTab");
+				});
+			}
+
 			band.addEventListener("pointerleave", () => {
 				if (leaveTimer) clearTimeout(leaveTimer);
 				leaveTimer = setTimeout(() => {
@@ -1412,6 +1475,7 @@ class sweWindow {
 		this._dockNode = overlay;
 		this._attachDockDividerResize(divider, null, band, bandContent, direction);
 		this._applyDockAutoHide(band);
+		this._dockUpdateOverlayInsets();
 		return { band, bandContent };
 	};
 
@@ -1431,6 +1495,7 @@ class sweWindow {
 		if (!bandContent) return;
 		if (bandContent.children.length > 0) return;
 		band.remove();
+		this._dockUpdateOverlayInsets();
 	};
 
 	_applyDockAutoHide = (band) => {
@@ -1439,6 +1504,7 @@ class sweWindow {
 		this._dockBindScrollToStartFromTab(band);
 		const resolved = this._dockResolveAutoHide(band);
 		band.classList.toggle("autoHide", !!resolved);
+		this._dockUpdateOverlayInsets();
 		const trigger = this._dockAutoHideTrigger;
 		if (trigger === "click") this._dockBindAutoHideClick(band);
 		else if (trigger === "hover") this._dockBindAutoHideHover(band);
@@ -1511,6 +1577,7 @@ class sweWindow {
 			} else {
 				band.style.height = next + "px";
 			}
+			this._dockUpdateOverlayInsets();
 		};
 
 		const onUp = (e) => {
@@ -1551,6 +1618,7 @@ class sweWindow {
 			window.removeEventListener("pointermove", onMove, true);
 			window.removeEventListener("pointerup", onUp, true);
 			window.removeEventListener("pointercancel", onUp, true);
+			this._dockUpdateOverlayInsets();
 		};
 
 		divider.addEventListener("lostpointercapture", onUp);
