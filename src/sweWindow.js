@@ -1172,6 +1172,7 @@ class sweWindow {
 			const tabSize = Number.parseFloat(tabSizeRaw) || 20;
 			const cleanupAnim = () => {
 				band.removeEventListener("transitionend", onEnd);
+				band.classList.remove("sweDockCollapsing");
 				if (isRow) band.style.width = "";
 				else band.style.height = "";
 				this._dockUpdateOverlayInsets();
@@ -1184,10 +1185,13 @@ class sweWindow {
 			};
 			band.style.flex = "";
 			band.style.flexBasis = "";
+			band.classList.add("sweDockCollapsing");
 			band.classList.remove("expanded");
 			// Fix current size as an explicit pixel value so width/height transition can run.
 			if (isRow) band.style.width = curSize + "px";
 			else band.style.height = curSize + "px";
+			// Force reflow so the next size change transitions.
+			void band.offsetWidth;
 			band.addEventListener("transitionend", onEnd);
 			// Trigger transition to collapsed tab size.
 			requestAnimationFrame(() => {
