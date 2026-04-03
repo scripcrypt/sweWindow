@@ -696,6 +696,41 @@ class sweWindow {
 		return Array.from(bandContent.querySelectorAll(":scope > .sweWindowFrame"));
 	};
 
+	_dockResetFrameForDock = (childWin) => {
+		if (!childWin?.frNode) return;
+		childWin.frNode.style.transform = "";
+		childWin.frNode.style.opacity = "";
+		childWin.frNode.classList.remove("dragging");
+		childWin.frNode.classList.remove("teleporting");
+	};
+
+	_dockApplyDockedInlineLayout = (childWin) => {
+		if (!childWin?.frNode) return;
+		childWin.frNode.style.position = "relative";
+		childWin.frNode.style.left = "";
+		childWin.frNode.style.top = "";
+		childWin.frNode.style.right = "";
+		childWin.frNode.style.bottom = "";
+		childWin.frNode.style.inset = "auto";
+		childWin.frNode.style.flex = "0 0 auto";
+	};
+
+	_dockClearDockedInlineLayout = (childWin) => {
+		if (!childWin?.frNode) return;
+		childWin.frNode.style.width = "";
+		childWin.frNode.style.height = "";
+		childWin.frNode.style.minHeight = "";
+		childWin.frNode.style.flex = "";
+		childWin.frNode.style.position = "";
+		childWin.frNode.style.left = "";
+		childWin.frNode.style.top = "";
+		childWin.frNode.style.right = "";
+		childWin.frNode.style.bottom = "";
+		childWin.frNode.style.inset = "";
+		childWin.frNode.style.transform = "";
+		childWin.frNode.style.opacity = "";
+	};
+
 	_dockGetActiveDockedFrame = (bandContent) => {
 		if (!bandContent) return null;
 		return bandContent.querySelector(":scope > .sweWindowFrame.sweDockActive")
@@ -1485,11 +1520,7 @@ class sweWindow {
 
 		// Save the floating size before docking overwrites it with sizing.
 		childWin._dockLastFloatRect = { ...(childWin.rect ?? {}) };
-		// Clear any drag-transform based positioning before inserting into the dock flow.
-		childWin.frNode.style.transform = "";
-		childWin.frNode.style.opacity = "";
-		childWin.frNode.classList.remove("dragging");
-		childWin.frNode.classList.remove("teleporting");
+		this._dockResetFrameForDock(childWin);
 		// Prevent transition artifacts (from absolute top/left) that can look like overlaps.
 		const prevTransition = childWin.frNode.style.transition;
 		childWin.frNode.style.transition = "none";
@@ -1500,12 +1531,7 @@ class sweWindow {
 		} else {
 			bandContent.append(childWin.frNode);
 		}
-		childWin.frNode.style.position = "relative";
-		childWin.frNode.style.left = "";
-		childWin.frNode.style.top = "";
-		childWin.frNode.style.right = "";
-		childWin.frNode.style.bottom = "";
-		childWin.frNode.style.inset = "auto";
+		this._dockApplyDockedInlineLayout(childWin);
 		const isHorizontalBand = side === "top" || side === "bottom";
 		if (isHorizontalBand) {
 			const rawW = childWin._dockLastFloatRect?.width ?? childWin.rect?.width;
@@ -1555,18 +1581,7 @@ class sweWindow {
 		if (childWin.wdNode && childWin.hdNode) {
 			childWin.wdNode.style.top = childWin.hdNode.offsetHeight + "px";
 		}
-		childWin.frNode.style.width = "";
-		childWin.frNode.style.height = "";
-		childWin.frNode.style.minHeight = "";
-		childWin.frNode.style.flex = "";
-		childWin.frNode.style.position = "";
-		childWin.frNode.style.left = "";
-		childWin.frNode.style.top = "";
-		childWin.frNode.style.right = "";
-		childWin.frNode.style.bottom = "";
-		childWin.frNode.style.inset = "";
-		childWin.frNode.style.transform = "";
-		childWin.frNode.style.opacity = "";
+		this._dockClearDockedInlineLayout(childWin);
 		childWin.frNode.remove();
 		this.floatLayer.append(childWin.frNode);
 		childWin._setChildInDockBandClass?.(childWin);
