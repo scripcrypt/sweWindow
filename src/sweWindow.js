@@ -67,6 +67,7 @@ class sweScreen {
 		this.scNode.classList.add("invisible");
 		this.scNode.sweScreen = this;
 		this._bindWheelPanGuard();
+		this._bindHorizontalScrollClamp();
 
 		// .sweTaskbar がなければ作る
 		if (!this.scNode.querySelector(".sweTaskbar")) {
@@ -126,6 +127,36 @@ class sweScreen {
 				e.stopPropagation();
 			},
 			{ passive: false, capture: true }
+		);
+	};
+
+	_bindHorizontalScrollClamp = () => {
+		if (this.__sweHorizontalScrollClampBound) return;
+		this.__sweHorizontalScrollClampBound = true;
+		let scheduled = false;
+		const clamp = () => {
+			scheduled = false;
+			const de = document.documentElement;
+			const b = document.body;
+			if (de && de.scrollLeft) de.scrollLeft = 0;
+			if (b && b.scrollLeft) b.scrollLeft = 0;
+		};
+		document.addEventListener(
+			"scroll",
+			(e) => {
+				if (!this.scNode) return;
+				const t = e?.target;
+				if (t && t.nodeType === 1 && !this.scNode.contains(t)) return;
+				const de = document.documentElement;
+				const b = document.body;
+				if (!de && !b) return;
+				const hasX = (de && de.scrollLeft) || (b && b.scrollLeft);
+				if (!hasX) return;
+				if (scheduled) return;
+				scheduled = true;
+				requestAnimationFrame(clamp);
+			},
+			true
 		);
 	};
 
