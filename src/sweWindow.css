@@ -936,6 +936,15 @@ pre {
 	content: "▲";
 }
 
+.sweDockBand.autoHide:not(.expanded)[data-side="top"] > .sweDockTab::before,
+.sweDockBand.autoHide:not(.expanded)[data-side="bottom"] > .sweDockTab::before {
+	font-size: 8px;
+	line-height: 1;
+	display: block;
+	transform: scaleX(3);
+	transform-origin: center;
+}
+
 .sweDockTabItem {
 	flex: 0 0 auto;
 	display: flex;
@@ -1202,6 +1211,10 @@ pre {
 .sweDockBand.autoHide {
 	/* autoHide expand/collapse animation speed (tweak here) */
 	transition: width 260ms ease, height 260ms ease;
+}
+
+.sweDockBand.autoHide.sweDockAnimating {
+	z-index: var(--sweZOverlayDockTab);
 }
 
 .sweDockBand.autoHide.sweDockResizing,

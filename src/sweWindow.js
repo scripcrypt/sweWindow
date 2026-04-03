@@ -1147,6 +1147,11 @@ class sweWindow {
 			return;
 		}
 
+		if (band.__sweAutoHideInsetTimer != null) {
+			clearTimeout(band.__sweAutoHideInsetTimer);
+			band.__sweAutoHideInsetTimer = null;
+		}
+
 		if (expanded) {
 			const saved = band.__sweAutoHideExpandedStyle;
 			if (saved) {
@@ -1155,8 +1160,15 @@ class sweWindow {
 				if (saved.width != null) band.style.width = saved.width;
 				if (saved.height != null) band.style.height = saved.height;
 			}
+			band.classList.add("sweDockAnimating");
 			band.classList.add("expanded");
 			this._dockUpdateOverlayInsets();
+			requestAnimationFrame(() => this._dockUpdateOverlayInsets());
+			band.__sweAutoHideInsetTimer = setTimeout(() => {
+				band.__sweAutoHideInsetTimer = null;
+				band.classList.remove("sweDockAnimating");
+				this._dockUpdateOverlayInsets();
+			}, 320);
 		} else {
 			// Save last expanded inline sizing and clear it so collapsed CSS (tab-size) can take effect.
 			band.__sweAutoHideExpandedStyle = {
@@ -1173,6 +1185,7 @@ class sweWindow {
 			const cleanupAnim = () => {
 				band.removeEventListener("transitionend", onEnd);
 				band.classList.remove("sweDockCollapsing");
+				band.classList.remove("sweDockAnimating");
 				// Switch to collapsed state ONLY after the collapse animation finishes.
 				band.classList.remove("expanded");
 				band.classList.remove("sweDockArrowDelay");
@@ -1198,6 +1211,7 @@ class sweWindow {
 			band.style.flex = "";
 			band.style.flexBasis = "";
 			band.classList.add("sweDockCollapsing");
+			band.classList.add("sweDockAnimating");
 			// Ensure collapse doesn't keep front-band styling/z-index.
 			band.classList.remove("sweDockFrontBand");
 			band.style.zIndex = "";
