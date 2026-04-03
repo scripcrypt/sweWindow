@@ -603,7 +603,7 @@ pre {
 .sweDockOverlayRoot > .sweDockBand {
 	position: absolute;
 	pointer-events: auto;
-	z-index: var(--sweZOverlayDockBand);
+	z-index: auto;
 }
 
 .sweDockOverlayRoot > .sweDockBand[data-side="left"] {

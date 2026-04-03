@@ -1145,7 +1145,8 @@ class sweWindow {
 			if (!root) return;
 			// Keep any inline z-index above the overlay content layer.
 			root.__sweOverlayZCounter = (root.__sweOverlayZCounter || this._dockOverlayZBase) + 1;
-			band.style.zIndex = String(root.__sweOverlayZCounter);
+			const tab = this._dockGetTab(band);
+			if (tab) tab.style.zIndex = String(root.__sweOverlayZCounter);
 		};
 
 		const showTab = () => {
