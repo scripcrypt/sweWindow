@@ -1183,9 +1183,14 @@ class sweWindow {
 				if (!isRow && e.propertyName !== "height") return;
 				cleanupAnim();
 			};
+			if (band.__sweDockArrowDelayTimer != null) {
+				clearTimeout(band.__sweDockArrowDelayTimer);
+				band.__sweDockArrowDelayTimer = null;
+			}
 			band.style.flex = "";
 			band.style.flexBasis = "";
 			band.classList.add("sweDockCollapsing");
+			band.classList.add("sweDockArrowDelay");
 			band.classList.remove("expanded");
 			// Fix current size as an explicit pixel value so width/height transition can run.
 			if (isRow) band.style.width = curSize + "px";
@@ -1200,6 +1205,10 @@ class sweWindow {
 				// In case transition doesn't fire (browser edge case), ensure cleanup.
 				setTimeout(cleanupAnim, 420);
 			});
+			band.__sweDockArrowDelayTimer = setTimeout(() => {
+				band.__sweDockArrowDelayTimer = null;
+				band.classList.remove("sweDockArrowDelay");
+			}, 300);
 			// When collapsing an autoHide band, make sure the tab is visible.
 			band.classList.add("sweDockShowTab");
 			setTimeout(() => band.classList.remove("sweDockShowTab"), 280);
