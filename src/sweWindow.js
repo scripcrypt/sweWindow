@@ -797,16 +797,26 @@ class sweWindow {
 
 	_dockScrollFrameIntoBandView = (bandContent, frame, side, behavior = "smooth") => {
 		if (!bandContent || !frame) return;
-		const br = bandContent.getBoundingClientRect();
-		const fr = frame.getBoundingClientRect();
 		const isHorizontalBand = side === "top" || side === "bottom";
 		if (isHorizontalBand) {
-			const current = bandContent.scrollLeft;
-			const left = fr.left - br.left + current;
+			let left = 0;
+			if (frame.parentElement === bandContent) {
+				left = frame.offsetLeft;
+			} else {
+				const br = bandContent.getBoundingClientRect();
+				const fr = frame.getBoundingClientRect();
+				left = fr.left - br.left + bandContent.scrollLeft;
+			}
 			bandContent.scrollTo({ left, behavior });
 		} else {
-			const current = bandContent.scrollTop;
-			const top = fr.top - br.top + current;
+			let top = 0;
+			if (frame.parentElement === bandContent) {
+				top = frame.offsetTop;
+			} else {
+				const br = bandContent.getBoundingClientRect();
+				const fr = frame.getBoundingClientRect();
+				top = fr.top - br.top + bandContent.scrollTop;
+			}
 			bandContent.scrollTo({ top, behavior });
 			// Side bands should never introduce horizontal scrolling.
 			bandContent.scrollLeft = 0;
@@ -921,9 +931,11 @@ class sweWindow {
 				this._dockSetBandExpanded(band, true);
 			}
 			requestAnimationFrame(() => {
-				const frames = this._dockGetDockedFrames(bandContent);
-				const fr = frames.find((x) => x?.sweWindow === childWin) || childWin.frNode;
-				this._dockScrollFrameIntoBandView(bandContent, fr, band?.dataset?.side);
+				requestAnimationFrame(() => {
+					const frames = this._dockGetDockedFrames(bandContent);
+					const fr = frames.find((x) => x?.sweWindow === childWin) || childWin.frNode;
+					this._dockScrollFrameIntoBandView(bandContent, fr, band?.dataset?.side);
+				});
 			});
 		});
 		tab.append(item);
