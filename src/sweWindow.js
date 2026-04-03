@@ -696,6 +696,16 @@ class sweWindow {
 		return Array.from(bandContent.querySelectorAll(":scope > .sweWindowFrame"));
 	};
 
+	_clearFrameInteractionState = (childWin, { clearTeleporting = true } = {}) => {
+		if (!childWin?.frNode) return;
+		childWin.frNode.style.transform = "";
+		childWin.frNode.style.opacity = "";
+		childWin.frNode.classList.remove("dragging");
+		if (clearTeleporting) {
+			childWin.frNode.classList.remove("teleporting");
+		}
+	};
+
 	_reparentFrameToHost = (childWin, host, insertBefore = null) => {
 		if (!childWin?.frNode || !host) return;
 		childWin.frNode.classList.add("teleporting");
@@ -712,10 +722,7 @@ class sweWindow {
 
 	_dockResetFrameForDock = (childWin) => {
 		if (!childWin?.frNode) return;
-		childWin.frNode.style.transform = "";
-		childWin.frNode.style.opacity = "";
-		childWin.frNode.classList.remove("dragging");
-		childWin.frNode.classList.remove("teleporting");
+		this._clearFrameInteractionState(childWin, { clearTeleporting: true });
 	};
 
 	_dockApplyDockedInlineLayout = (childWin) => {
@@ -731,6 +738,7 @@ class sweWindow {
 
 	_dockClearDockedInlineLayout = (childWin) => {
 		if (!childWin?.frNode) return;
+		this._clearFrameInteractionState(childWin, { clearTeleporting: false });
 		childWin.frNode.style.width = "";
 		childWin.frNode.style.height = "";
 		childWin.frNode.style.minHeight = "";
