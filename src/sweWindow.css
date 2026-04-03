@@ -647,7 +647,7 @@ pre {
 }
 
 /* When a window is used as a dock-context container, stack child frames in normal flow */
-.sweDockChildStacking > .sweWindowFrame {
+.sweDockBandContent > .sweWindowFrame {
 	position: relative !important;
 	left: auto !important;
 	top: auto !important;
@@ -655,6 +655,7 @@ pre {
 	width: 100% !important;
 	height: auto !important;
 	flex: 0 0 auto !important;
+	z-index: 0 !important;
 }
 
 .sweDockSplit {
