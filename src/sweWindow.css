@@ -702,8 +702,18 @@ pre {
 }
 
 /* 境界線は divider の「メイン側の端」に寄せる（タブは線の外側=帯側） */
-.sweDockBand[data-side="left"] > .sweDockDivider::after,
-.sweDockBand[data-side="right"] > .sweDockDivider::after {
+
+.sweDockBand:not(.sweDockFrontBand)[data-side="left"] > .sweDockDivider::after,
+.sweDockBand:not(.sweDockFrontBand)[data-side="right"] > .sweDockDivider::after {
+	top: var(--sweDockInsetTop, 0px);
+	bottom: var(--sweDockInsetBottom, 0px);
+	width: 1px;
+	left: 50%;
+	transform: translateX(-0.5px);
+}
+
+.sweDockBand.sweDockFrontBand[data-side="left"] > .sweDockDivider::after,
+.sweDockBand.sweDockFrontBand[data-side="right"] > .sweDockDivider::after {
 	top: 0;
 	bottom: 0;
 	width: 1px;
@@ -721,8 +731,18 @@ pre {
 	left: 50%;
 }
 
-.sweDockBand[data-side="top"] > .sweDockDivider::after,
-.sweDockBand[data-side="bottom"] > .sweDockDivider::after {
+
+.sweDockBand:not(.sweDockFrontBand)[data-side="top"] > .sweDockDivider::after,
+.sweDockBand:not(.sweDockFrontBand)[data-side="bottom"] > .sweDockDivider::after {
+	left: var(--sweDockInsetLeft, 0px);
+	right: var(--sweDockInsetRight, 0px);
+	height: 1px;
+	top: 50%;
+	transform: translateY(-0.5px);
+}
+
+.sweDockBand.sweDockFrontBand[data-side="top"] > .sweDockDivider::after,
+.sweDockBand.sweDockFrontBand[data-side="bottom"] > .sweDockDivider::after {
 	left: 0;
 	right: 0;
 	height: 1px;

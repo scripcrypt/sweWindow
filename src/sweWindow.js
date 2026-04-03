@@ -1149,6 +1149,10 @@ class sweWindow {
 				band.remove();
 				root.append(band);
 			}
+			for (const b of root.querySelectorAll(":scope > .sweDockBand.sweDockFrontBand")) {
+				if (b !== band) b.classList.remove("sweDockFrontBand");
+			}
+			band.classList.add("sweDockFrontBand");
 			// Keep tab stacking above the content layer.
 			root.__sweOverlayZCounter = (root.__sweOverlayZCounter || this._dockOverlayZBase) + 1;
 			const tab = this._dockGetTab(band);
