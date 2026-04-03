@@ -36,10 +36,10 @@
 	--sweWindow-header-button-close-hover: rgb(251, 8, 8);
 	--windowTypeIcons-normal: \e835;
 	--width-padding: 200px;
-	--sweZOverlayDockBand: 1000;
-	--sweZOverlayFloatLayer: 100000;
-	--sweZOverlayDockDivider: 1100;
-	--sweZOverlayDockTab: 200000;
+	--sweZOverlayDockBand: 900;
+	--sweZOverlayFloatLayer: 1000;
+	--sweZOverlayDockDivider: 950;
+	--sweZOverlayDockTab: 2000;
 	--sweZWindowDrag: 10000;
 }
 .target-element {
