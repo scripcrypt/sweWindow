@@ -795,6 +795,24 @@ class sweWindow {
 		return Array.from(bandContent.querySelectorAll(":scope > .sweWindowFrame"));
 	};
 
+	_dockScrollFrameIntoBandView = (bandContent, frame, side, behavior = "smooth") => {
+		if (!bandContent || !frame) return;
+		const br = bandContent.getBoundingClientRect();
+		const fr = frame.getBoundingClientRect();
+		const isHorizontalBand = side === "top" || side === "bottom";
+		if (isHorizontalBand) {
+			const current = bandContent.scrollLeft;
+			const left = fr.left - br.left + current;
+			bandContent.scrollTo({ left, behavior });
+		} else {
+			const current = bandContent.scrollTop;
+			const top = fr.top - br.top + current;
+			bandContent.scrollTo({ top, behavior });
+			// Side bands should never introduce horizontal scrolling.
+			bandContent.scrollLeft = 0;
+		}
+	};
+
 	_clearFrameInteractionState = (childWin, { clearTeleporting = true } = {}) => {
 		if (!childWin?.frNode) return;
 		childWin.frNode.style.transform = "";
@@ -905,7 +923,7 @@ class sweWindow {
 			requestAnimationFrame(() => {
 				const frames = this._dockGetDockedFrames(bandContent);
 				const fr = frames.find((x) => x?.sweWindow === childWin) || childWin.frNode;
-				fr?.scrollIntoView?.({ behavior: "smooth", block: "start", inline: "start" });
+				this._dockScrollFrameIntoBandView(bandContent, fr, band?.dataset?.side);
 			});
 		});
 		tab.append(item);
