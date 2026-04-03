@@ -1176,6 +1176,8 @@ class sweWindow {
 				// Switch to collapsed state ONLY after the collapse animation finishes.
 				band.classList.remove("expanded");
 				band.classList.remove("sweDockArrowDelay");
+				band.classList.remove("sweDockFrontBand");
+				band.style.zIndex = "";
 				if (band.__sweDockArrowDelayTimer != null) {
 					clearTimeout(band.__sweDockArrowDelayTimer);
 					band.__sweDockArrowDelayTimer = null;
@@ -1196,6 +1198,9 @@ class sweWindow {
 			band.style.flex = "";
 			band.style.flexBasis = "";
 			band.classList.add("sweDockCollapsing");
+			// Ensure collapse doesn't keep front-band styling/z-index.
+			band.classList.remove("sweDockFrontBand");
+			band.style.zIndex = "";
 			// Keep 'expanded' during the animation to avoid showing collapsed arrow too early.
 			// Fix current size as an explicit pixel value so width/height transition can run.
 			if (isRow) band.style.width = curSize + "px";
