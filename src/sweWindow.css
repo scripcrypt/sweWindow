@@ -789,6 +789,7 @@ pre {
 	padding: 0;
 	margin: 0;
 	position: relative;
+	isolation: isolate;
 	z-index: 2;
 }
 
@@ -798,6 +799,8 @@ pre {
 
 .sweDockBandContent {
 	background: var(--sweWindow-background-color);
+	position: relative;
+	z-index: 0;
 }
 
 .sweDockBand[data-side="left"],
