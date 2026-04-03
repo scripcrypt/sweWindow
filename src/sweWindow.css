@@ -1183,6 +1183,15 @@ pre {
 .sweDockBand.autoHide:not(.expanded)[data-side="left"],
 .sweDockBand.autoHide:not(.expanded)[data-side="right"] {
 	width: 15px;
+	pointer-events: none;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockTab {
+	pointer-events: auto;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockDivider {
+	pointer-events: none;
 }
 
 .sweDockBand.autoHide:not(.expanded)[data-side="top"],
