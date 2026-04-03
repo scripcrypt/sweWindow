@@ -898,17 +898,17 @@ pre {
 	display: none;
 }
 
-.sweDockBand.autoHide:not(.expanded) > .sweDockTab::before {
+.sweDockBand.autoHide:not(.expanded):not(.sweDockCollapsing):not(.sweDockArrowDelay) > .sweDockTab::before {
 	font-size: 14px;
 	line-height: 1;
 	opacity: 0.95;
 }
 
-.sweDockBand.autoHide:not(.expanded)[data-side="left"] > .sweDockTab::before {
+.sweDockBand.autoHide:not(.expanded):not(.sweDockCollapsing):not(.sweDockArrowDelay)[data-side="left"] > .sweDockTab::before {
 	content: "▶";
 }
 
-.sweDockBand.autoHide:not(.expanded)[data-side="right"] > .sweDockTab::before {
+.sweDockBand.autoHide:not(.expanded):not(.sweDockCollapsing):not(.sweDockArrowDelay)[data-side="right"] > .sweDockTab::before {
 	content: "◀";
 }
 
@@ -928,11 +928,11 @@ pre {
 	transform-origin: center;
 }
 
-.sweDockBand.autoHide:not(.expanded)[data-side="top"] > .sweDockTab::before {
+.sweDockBand.autoHide:not(.expanded):not(.sweDockCollapsing):not(.sweDockArrowDelay)[data-side="top"] > .sweDockTab::before {
 	content: "▼";
 }
 
-.sweDockBand.autoHide:not(.expanded)[data-side="bottom"] > .sweDockTab::before {
+.sweDockBand.autoHide:not(.expanded):not(.sweDockCollapsing):not(.sweDockArrowDelay)[data-side="bottom"] > .sweDockTab::before {
 	content: "▲";
 }
 
