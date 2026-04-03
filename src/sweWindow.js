@@ -695,6 +695,15 @@ class sweWindow {
 		this._setChildInDockBandClass(childWin);
 	};
 
+	_dockRefreshTabIfNeeded = (band) => {
+		if (!band) return;
+		this._dockRefreshTabPresentation(band);
+	};
+
+	_dockCleanupEmptyOriginBand = (originParent, originBandContent) => {
+		originParent?._cleanupEmptyDockFrom?.(originBandContent);
+	};
+
 	_dockGetBandContent = (band) => {
 		return band?.querySelector?.(":scope > .sweDockBandContent") ?? null;
 	};
@@ -1640,14 +1649,11 @@ class sweWindow {
 			childWin.wdNode.style.height = "";
 		}
 		const band = bandContent.closest(".sweDockBand");
-		if (band) {
-			// Single occupant: keep tab as a label.
-			this._dockRefreshTabPresentation(band);
-		}
+		this._dockRefreshTabIfNeeded(band);
 		this._dockRefreshStackSeparators(bandContent);
 		this._dockBindUndockFromTab(band);
 		this._applyDockAutoHide(band);
-		originParent?._cleanupEmptyDockFrom?.(originBandContent);
+		this._dockCleanupEmptyOriginBand(originParent, originBandContent);
 		childWin.bringToFront?.();
 	};
 
@@ -1673,9 +1679,7 @@ class sweWindow {
 			cleanupOriginDock: true,
 			afterTeleport: () => {
 				this._setChildParentAndDockBandClass(childWin, this);
-				if (fromBand) {
-					this._dockRefreshTabPresentation(fromBand);
-				}
+				this._dockRefreshTabIfNeeded(fromBand);
 				// Restore the floating size if available.
 				const r = childWin._dockLastFloatRect;
 				if (r && Number.isFinite(r.width) && Number.isFinite(r.height)) {
