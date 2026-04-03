@@ -1027,6 +1027,7 @@ pre {
 	flex-direction: column;
 	align-items: stretch;
 	overflow: auto;
+	scrollbar-gutter: stable;
 	scrollbar-width: none;
 	-ms-overflow-style: none;
 	min-width: 0;
@@ -1035,7 +1036,7 @@ pre {
 	z-index: 1;
 }
 
-/* Overlay mode: frames must be in normal flow to make bandContent scrollable */
+
 .sweDockBandContent > .sweWindowFrame {
 	position: relative !important;
 	left: auto !important;
