@@ -1606,31 +1606,31 @@ class sweWindow {
 		const fromBandContent = childWin.frNode.closest?.(".sweDockBandContent");
 		const fromBand = fromBandContent?.closest?.(".sweDockBand") ?? null;
 		const wasActive = childWin.frNode.classList.contains("sweDockActive");
-		childWin.frNode.classList.add("teleporting");
 		childWin.frNode.classList.remove("docked");
 		childWin.frNode.classList.remove("sweDockActive");
 		if (childWin.wdNode && childWin.hdNode) {
 			childWin.wdNode.style.top = childWin.hdNode.offsetHeight + "px";
 		}
 		this._dockClearDockedInlineLayout(childWin);
-		childWin.frNode.remove();
-		this.floatLayer.append(childWin.frNode);
-		childWin._setChildInDockBandClass?.(childWin);
-		if (fromBand) {
-			this._dockRefreshTabPresentation(fromBand);
-		}
-
-		// Restore the floating size if available.
-		const r = childWin._dockLastFloatRect;
-		if (r && Number.isFinite(r.width) && Number.isFinite(r.height)) {
-			childWin.frNode.style.width = r.width + "px";
-			childWin.frNode.style.height = r.height + "px";
-		}
-		childWin._setFramePosInHostFromViewportRect(this.floatLayer, vr);
-		childWin._clampFrameIntoHost(this.floatLayer, 0);
-		this._cleanupEmptyDockFrom(fromBandContent);
-		requestAnimationFrame(() => {
-			childWin.frNode.classList.remove("teleporting");
+		childWin._teleportFrameToHostFromViewportRect({
+			host: this.floatLayer,
+			viewportRect: vr,
+			bottomInset: 0,
+			originParent: this,
+			originBandContent: fromBandContent,
+			cleanupOriginDock: true,
+			afterTeleport: () => {
+				childWin._setChildInDockBandClass?.(childWin);
+				if (fromBand) {
+					this._dockRefreshTabPresentation(fromBand);
+				}
+				// Restore the floating size if available.
+				const r = childWin._dockLastFloatRect;
+				if (r && Number.isFinite(r.width) && Number.isFinite(r.height)) {
+					childWin.frNode.style.width = r.width + "px";
+					childWin.frNode.style.height = r.height + "px";
+				}
+			},
 		});
 	};
 
