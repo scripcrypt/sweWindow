@@ -1141,6 +1141,11 @@ class sweWindow {
 	_dockSetBandExpanded = (band, expanded) => {
 		if (!band) return;
 		const isAutoHide = band.classList.contains("autoHide");
+		const tabZ = (() => {
+			const raw = getComputedStyle(document.documentElement).getPropertyValue("--sweZOverlayDockTab");
+			const n = Number.parseFloat(raw);
+			return Number.isFinite(n) ? String(n) : "200000";
+		})();
 		if (!isAutoHide) {
 			band.classList.toggle("expanded", !!expanded);
 			this._dockUpdateOverlayInsets();
@@ -1160,6 +1165,7 @@ class sweWindow {
 				if (saved.width != null) band.style.width = saved.width;
 				if (saved.height != null) band.style.height = saved.height;
 			}
+			band.style.zIndex = tabZ;
 			band.classList.add("sweDockAnimating");
 			band.classList.add("expanded");
 			this._dockUpdateOverlayInsets();
@@ -1190,7 +1196,8 @@ class sweWindow {
 				band.classList.remove("expanded");
 				band.classList.remove("sweDockArrowDelay");
 				band.classList.remove("sweDockFrontBand");
-				band.style.zIndex = "";
+				// The tab must be above floatLayer when collapsed.
+				band.style.zIndex = tabZ;
 				if (band.__sweDockArrowDelayTimer != null) {
 					clearTimeout(band.__sweDockArrowDelayTimer);
 					band.__sweDockArrowDelayTimer = null;
@@ -1200,6 +1207,7 @@ class sweWindow {
 				this._dockUpdateOverlayInsets();
 				// When collapsing an autoHide band, make sure the tab is visible.
 				band.classList.add("sweDockShowTab");
+				band.style.zIndex = tabZ;
 				setTimeout(() => band.classList.remove("sweDockShowTab"), 280);
 			};
 			const onEnd = (e) => {
@@ -1212,9 +1220,9 @@ class sweWindow {
 			band.style.flexBasis = "";
 			band.classList.add("sweDockCollapsing");
 			band.classList.add("sweDockAnimating");
+			band.style.zIndex = tabZ;
 			// Ensure collapse doesn't keep front-band styling/z-index.
 			band.classList.remove("sweDockFrontBand");
-			band.style.zIndex = "";
 			// Keep 'expanded' during the animation to avoid showing collapsed arrow too early.
 			// Fix current size as an explicit pixel value so width/height transition can run.
 			if (isRow) band.style.width = curSize + "px";
