@@ -795,7 +795,7 @@ class sweWindow {
 		return Array.from(bandContent.querySelectorAll(":scope > .sweWindowFrame"));
 	};
 
-	_dockScrollFrameIntoBandView = (bandContent, frame, side, behavior = "smooth") => {
+	_dockScrollFrameIntoBandView = (bandContent, frame, side, behavior = "auto") => {
 		if (!bandContent || !frame) return;
 		const isHorizontalBand = side === "top" || side === "bottom";
 		if (isHorizontalBand) {
@@ -807,7 +807,11 @@ class sweWindow {
 				const fr = frame.getBoundingClientRect();
 				left = fr.left - br.left + bandContent.scrollLeft;
 			}
-			bandContent.scrollTo({ left, behavior });
+			left = Math.max(0, Math.min(left, Math.max(0, bandContent.scrollWidth - bandContent.clientWidth)));
+			bandContent.scrollLeft = left;
+			if (behavior !== "auto") {
+				bandContent.scrollTo({ left, behavior });
+			}
 		} else {
 			let top = 0;
 			if (frame.parentElement === bandContent) {
@@ -817,7 +821,11 @@ class sweWindow {
 				const fr = frame.getBoundingClientRect();
 				top = fr.top - br.top + bandContent.scrollTop;
 			}
-			bandContent.scrollTo({ top, behavior });
+			top = Math.max(0, Math.min(top, Math.max(0, bandContent.scrollHeight - bandContent.clientHeight)));
+			bandContent.scrollTop = top;
+			if (behavior !== "auto") {
+				bandContent.scrollTo({ top, behavior });
+			}
 			// Side bands should never introduce horizontal scrolling.
 			bandContent.scrollLeft = 0;
 		}
@@ -930,13 +938,20 @@ class sweWindow {
 				this._dockAutoHideCancelClose(band);
 				this._dockSetBandExpanded(band, true);
 			}
-			requestAnimationFrame(() => {
-				requestAnimationFrame(() => {
-					const frames = this._dockGetDockedFrames(bandContent);
-					const fr = frames.find((x) => x?.sweWindow === childWin) || childWin.frNode;
-					this._dockScrollFrameIntoBandView(bandContent, fr, band?.dataset?.side);
-				});
-			});
+			const side = band?.dataset?.side;
+			const tryScroll = (tries = 0) => {
+				if (tries > 8) return;
+				// Wait until layout is ready (autoHide expand can be display:none -> flex).
+				const ready = bandContent.clientHeight > 0 && bandContent.scrollHeight > 0;
+				if (!ready) {
+					requestAnimationFrame(() => tryScroll(tries + 1));
+					return;
+				}
+				const frames = this._dockGetDockedFrames(bandContent);
+				const fr = frames.find((x) => x?.sweWindow === childWin) || childWin.frNode;
+				this._dockScrollFrameIntoBandView(bandContent, fr, side, "auto");
+			};
+			requestAnimationFrame(() => tryScroll(0));
 		});
 		tab.append(item);
 		return item;
