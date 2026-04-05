@@ -1,0 +1,1444 @@
+// sweWindow.scss
+// ------------------------------------------------------------
+// このファイルは src/sweWindow.css と等価になるように作成しています。
+// 目的:
+// - コメント（意図説明）を SCSS 側に集約する
+// - 表示やアニメーションを壊さずに、sass で css を生成できるようにする
+//
+// ビルド例（Dart Sass）:
+//   sass src/sweWindow.scss src/sweWindow.css
+//   sass --watch src/sweWindow.scss:src/sweWindow.css
+//
+// 注意:
+// - // コメントはコンパイル後のCSSには出ません。
+// - 既存の /* */ コメントは、そのままCSSにも残ります。
+// ------------------------------------------------------------
+
+@import url('https://fonts.googleapis.com/css2?family=Gabriela&family=M+PLUS+1p&family=Mochiy+Pop+One&family=Roboto:ital,wght@0,100..900;1,100..900&family=Sawarabi+Gothic&display=swap');
+
+// ============================================================
+// ルート変数
+// ============================================================
+:root {
+	--sweTaskBar-bg-color: rgb(22, 22, 22);
+	--sweTaskBarButton-bg-color: rgb(60, 60, 60);
+	--sweTaskBarButton-text-color: rgb(200, 200, 200);
+	--sweTaskBarButton-border-color: rgb(70, 70, 70);
+	--sweTaskBarButton-bg-color-active: rgb(110, 110, 110);
+	--sweTaskBarButton-text-color-active: rgb(255, 255, 255);
+	--sweTaskBarButton-border-color-active: rgb(120, 120, 120);
+	--sweWindow-border: 1px solid rgb(88, 88, 88);
+	--sweWindow-background-color: rgb(52, 52, 52);
+	--sweWindow-font-color: rgb(240, 240, 240);
+	--sweWindow-padding-size: 5px;
+	--sweWindow-border: 1px solid rgba(255, 255, 255, 0.3);
+	--sweWindow-border-radius: 6px;
+	--sweWindow-box-shadow: 0 0 12px 1px rgba(0, 0, 0, 0.2);
+	--sweWindow-scrollbar-thumb-widt: 8px;
+	--sweWindow-scrollbar-thumb-color: rgb(65, 78, 80);
+	--sweWindow-header-height: 36px;
+	--dock-tab-size: 20px;
+	--sweWindow-header-padding-top: 2px;
+	--sweWindow-header-padding-right: 0px;
+	--sweWindow-header-padding-bottom: 3px;
+	--sweWindow-header-padding-left: 0px;
+	--sweWindow-header-font-color: rgb(233, 233, 233);
+	--sweWindow-header-font-weight: 700;
+	--sweWindow-header-background-color: rgb(24, 24, 24);
+	--sweWindow-header-font-size: 14px;
+	--sweWindow-header-background-color-dragging: rgb(0, 30, 40);
+	--sweWindow-header-font-color-dragging: rgb(255, 255, 255);
+	--sweWindow-header-button-minimize: rgb(186, 186, 60);
+	--sweWindow-header-button-minimize-hover: rgb(244, 244, 10);
+	--sweWindow-header-button-maximize: rgb(58, 177, 58);
+	--sweWindow-header-button-maximize-hover: rgb(8, 248, 8);
+	--sweWindow-header-button-close: rgb(178, 65, 65);
+	--sweWindow-header-button-close-hover: rgb(251, 8, 8);
+	--windowTypeIcons-normal: \e835;
+	--width-padding: 200px;
+	/*--------------------------------------------------
+		Dock/Overlay: レイヤ（z-index）設計
+		- band は floatLayer より下
+		- tab（矢印/タブ）だけ常に最前面
+	--------------------------------------------------*/
+	--sweZOverlayDockBand: 900;
+	--sweZOverlayFloatLayer: 1000;
+	--sweZOverlayDockDivider: 950;
+	--sweZOverlayDockTab: 2000;
+	--sweZWindowDrag: 10000;
+}
+
+.target-element {
+	touch-action: none;
+	/* ブラウザのデフォルト動作を無効化 */
+}
+html {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	background-color: rgb(84, 84, 84);
+	font-family: 'Sawarabi Gothic', sans-serif;
+	overflow: hidden;
+	overscroll-behavior-x: none;
+}
+body {
+	margin: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	overscroll-behavior-x: none;
+}
+h3 {
+	line-height: 1;
+	padding: 0;
+	margin: 2px 8px 14px 8px;
+}
+pre {
+	white-space: pre-line;
+	padding: 0;
+	margin: 0;
+	background-color: transparent;
+	overflow-y: auto;
+	font-size: 16px;
+	line-height: 1.6;
+}
+.center {
+	display: flex;
+	justify-content: center;
+	width: 100%;
+	padding: 0;
+	margin: 0;
+	background-color: transparent;
+}
+.row {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: flex-start;
+	padding: 8px;
+}
+.sweScreen {
+	position: absolute;
+	top: 100px;
+	left: 100px;
+	width: calc(100% - var(--width-padding));
+	height: calc(100% - 200px);
+	background-color: rgb(34, 34, 34);
+	overflow: hidden;
+}
+.sweScreen.invisible {
+	visibility: hidden;
+}
+.sweScreen.unselectable {
+	user-select: none !important;
+}
+/* ============================================================
+   Taskbar
+============================================================ */
+.sweTaskbar {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	/*	height: 36px;*/
+	width: 100%;
+	background-color: var(--sweTaskBar-bg-color);
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	padding: 4px 6px 3px 6px;
+	gap: 6px;
+	z-index: 1000;
+}
+.sweTaskButton {
+	border: 1px solid var(--sweTaskBarButton-border-color);
+	background-color: var(--sweTaskBarButton-bg-color);
+	color: var(--sweTaskBarButton-text-color);
+	font-size: 12px;
+	padding: 4px 10px;
+	border-radius: 4px;
+	cursor: pointer;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	max-width: 200px;
+	transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+.sweTaskButton:hover {
+	background-color: #3d3d3d;
+	border-color: #555;
+}
+.sweTaskButton.active {
+	background-color: var(--sweTaskBarButton-bg-color-active);
+	border-color: var(--sweTaskBarButton-border-color-active);
+	color: var(--sweTaskBarButton-text-color-active);
+}
+.sweTaskButton.is-minimized {
+	opacity: 0.6;
+}
+/* ============================================================
+   Frame
+============================================================ */
+.sweWindowFrame {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	border-radius: var(--sweWindow-border-radius);
+	border: var(--sweWindow-border);
+	background-color: var(--sweWindow-background-color);
+	color: var(--sweWindow-font-color);
+	padding: 0;
+	border-radius: var(--sweWindow-border-radius);
+	box-shadow: var(--sweWindow-box-shadow);
+	filter: contrast(75%) brightness(85%);
+	z-index: 0;
+	transition:
+		top 0.1s ease,
+		left 0.1s ease,
+		width 0.1s ease,
+		height 0.1s ease;
+}
+.sweWindowFrame.active {
+	filter: none;
+}
+.sweWindowFrame.dragging {
+	will-change: transform, left, top;
+	transition: none !important;
+	box-shadow: none;
+	z-index: var(--sweZWindowDrag) !important;
+}
+.sweWindowFrame.resizing {
+	will-change: width, height, left, top;
+	box-shadow: none !important;
+	transition: none !important;
+	z-index: var(--sweZWindowDrag) !important;
+}
+.sweWindowFrame.teleporting {
+	transition: none !important;
+}
+.sweWindowFrame.docked > .sweWindowHeader {
+	display: none;
+}
+
+.sweWindowFrame.sweChildInDockBand > .sweWindowHeader {
+	display: none;
+}
+
+.sweWindowFrame.sweChildInDockBand {
+	border-radius: 0;
+	border: none;
+	box-shadow: none;
+	border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+.sweWindowFrame.docked {
+	border-radius: 0;
+	border: none;
+	box-shadow: none;
+}
+.sweWindowFrame.maximize {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	border: none;
+	height: calc(100% - var(--taskbar-height));
+}
+@keyframes swe-open {
+	from {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+.sweWindowFrame.openAnim {
+	animation: swe-open 0.18s ease-out both;
+}
+@keyframes swe-maximize {
+	from {
+		top: var(--from-top);
+		left: var(--from-left);
+		width: var(--from-width);
+		height: var(--from-height);
+	}
+	to {
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: calc(100% - var(--taskbar-height));
+	}
+}
+.sweWindowFrame.maximizeAnim {
+	animation: swe-maximize 0.1s ease forwards;
+}
+.sweWindowFrame.minimize {
+	display: none;
+}
+@keyframes swe-minimize {
+	from {
+		transform: translate(0px, 0px) scale(1);
+		opacity: 1;
+	}
+	to {
+		transform: translate(var(--min-dx), var(--min-dy)) scale(0.2);
+		opacity: 0;
+	}
+}
+.sweWindowFrame.minimizeAnim {
+	animation: swe-minimize 0.1s ease forwards;
+	pointer-events: none;
+}
+@keyframes swe-restore {
+	from {
+		transform: translate(var(--restore-dx), var(--restore-dy)) scale(0.2);
+		opacity: 0;
+	}
+	to {
+		transform: translate(0px, 0px) scale(1);
+		opacity: 1;
+	}
+}
+.sweWindowFrame.restoreAnim {
+	animation: swe-restore 0.1s ease forwards;
+}
+.sweWindowFrame.closing {
+	transition:
+		transform 0.18s ease,
+		opacity 0.18s ease;
+	transform-origin: center center;
+}
+/*-- Scrolls --*/
+.sweWindowFrame *::-webkit-scrollbar {
+	width: var(--sweWindow-scrollbar-thumb-widt);
+}
+.sweWindowFrame *::-webkit-scrollbar-track {
+	background-color: transparent;
+}
+.sweWindowFrame *::-webkit-scrollbar-thumb {
+	background: var(--sweWindow-scrollbar-thumb-color);
+}
+/* ============================================================
+   Window
+============================================================ */
+.sweWindow {
+	flex-grow: 1;
+	/* 親の余った高さを埋める */
+	width: 100%;
+	overflow: auto;
+	box-sizing: border-box;
+	overflow: auto;
+	box-sizing: border-box;
+	padding: var(--sweWindow-padding-size);
+	scrollbar-gutter: stable;
+}
+
+.sweWindow.sweHasInnerDesktop {
+	padding: 0 !important;
+	overflow: hidden;
+	scrollbar-gutter: auto;
+}
+.sweWindowFrame>.sweWindow {
+	visibility: visible;
+}
+.sweWindowFrame.dragging>.sweWindowHeader {
+	color: var(--sweWindow-header-font-color-dragging) !important;
+	background-color: var(--sweWindow-header-background-color-dragging) !important;
+}
+.sweWindowFrame.minimize>.sweWindowHeader {
+	border-bottom-left-radius: var(--sweWindow-border-radius);
+	border-bottom-right-radius: var(--sweWindow-border-radius);
+}
+.sweWindow img {
+	margin: 0 8px 0 0;
+}
+/* ============================================================
+   Window Header
+============================================================ */
+.sweWindowHeader {
+	width: 100%;
+	display: flex;
+	flex-wrap: nowrap;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: center;
+	min-height: var(--sweWindow-header-height);
+	max-height: var(--sweWindow-header-height);
+	height: var(--sweWindow-header-height);
+	background-color: var(--sweWindow-header-background-color);
+	color: var(--sweWindow-header-font-color);
+	font-weight: var(--sweWindow-header-font-weight);
+	font-size: var(--sweWindow-header-font-size);
+	padding-top: var(--sweWindow-header-padding-top);
+	padding-right: var(--sweWindow-header-padding-right);
+	padding-bottom: var(--sweWindow-header-padding-bottom);
+	padding-left: var(--sweWindow-header-padding-left);
+	border-top-left-radius: var(--sweWindow-border-radius);
+	border-top-right-radius: var(--sweWindow-border-radius);
+}
+.sweWindowHeader>.sweWindowHeaderTitle {
+	display: inline-flex;
+	flex-wrap: nowrap;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: center;
+	font-family: system-ui, "Noto Sans JP", "Noto Sans", sans-serif;
+	line-height: 1;
+	user-select: none;
+	padding-left: 10px;
+	width: calc(100% - 60px);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+.sweWindowHeader>.sweWindowHeaderTitle::before {
+	position: relative;
+	top: 0.5px;
+	font-size: 120%;
+	content: "\f8ee";
+	font-family: "Material Symbols Outlined";
+	margin-right: 2px;
+}
+.sweWindowHeader>.sweWindowHeaderButtons {
+	display: flex;
+	flex-wrap: nowrap;
+	flex-direction: row;
+	justify-content: flex-end;
+	align-items: center;
+	width: 50px;
+	margin-right: 10px;
+	background-color: transparent;
+}
+.sweWindowHeaderButtons>button {
+	border-radius: 50%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 12px;
+	height: 12px;
+	text-decoration: none;
+	text-align: center;
+	border: none;
+	outline: none;
+	color: #FFF;
+}
+.sweWindowHeaderButtons>button.minimize {
+	background: var(--sweWindow-header-button-minimize);
+}
+.sweWindowHeaderButtons>button.minimize:hover {
+	background: var(--sweWindow-header-button-minimize-hover);
+}
+.sweWindowHeaderButtons>button.maximize {
+	background: var(--sweWindow-header-button-maximize);
+}
+.sweWindowHeaderButtons>button.maximize:hover {
+	background: var(--sweWindow-header-button-maximize-hover);
+}
+.sweWindowHeaderButtons>button.close {
+	background: var(--sweWindow-header-button-close);
+}
+.sweWindowHeaderButtons>button.close:hover {
+	background: var(--sweWindow-header-button-close-hover);
+}
+.sweWindowHeaderButtons>button:not(:last-child) {
+	margin-right: 5px;
+}
+.sweWindow_resize_top {
+	position: absolute;
+	top: -2px;
+	left: 4px;
+	height: 4px;
+	width: calc(100% - 8px);
+	background-color: transparent;
+}
+.sweWindow_resize_top:hover {
+	cursor: ns-resize;
+}
+.sweWindow_resize_topRight {
+	position: absolute;
+	top: -2px;
+	right: -4px;
+	height: 8px;
+	width: 8px;
+	background-color: transparent;
+}
+.sweWindow_resize_topRight:hover {
+	cursor: nesw-resize;
+}
+.sweWindow_resize_right {
+	position: absolute;
+	top: 4px;
+	right: -2px;
+	height: calc(100% - 8px);
+	width: 4px;
+	background-color: transparent;
+}
+.sweWindow_resize_right:hover {
+	cursor: ew-resize;
+}
+.sweWindow_resize_rightBottom {
+	position: absolute;
+	bottom: -2px;
+	right: -2px;
+	height: 8px;
+	width: 8px;
+	background-color: transparent;
+}
+.sweWindow_resize_rightBottom:hover {
+	cursor: nwse-resize;
+}
+.sweWindow_resize_bottom {
+	position: absolute;
+	bottom: -2px;
+	left: 4px;
+	height: 4px;
+	width: calc(100% - 8px);
+	background-color: transparent;
+}
+.sweWindow_resize_bottom:hover {
+	cursor: ns-resize;
+}
+.sweWindow_resize_bottomLeft {
+	position: absolute;
+	bottom: -2px;
+	left: -2px;
+	height: 8px;
+	width: 8px;
+	background-color: transparent;
+}
+.sweWindow_resize_bottomLeft:hover {
+	cursor: nesw-resize;
+}
+.sweWindow_resize_left {
+	position: absolute;
+	top: 4px;
+	left: -2px;
+	height: calc(100% - 8px);
+	width: 4px;
+	background-color: transparent;
+}
+.sweWindow_resize_left:hover {
+	cursor: ew-resize;
+}
+.sweWindow_resize_leftTop {
+	position: absolute;
+	top: -2px;
+	left: -2px;
+	height: 8px;
+	width: 8px;
+	background-color: transparent;
+}
+.sweWindow_resize_leftTop:hover {
+	cursor: nwse-resize;
+}
+
+/* dock 中は通常のウィンドウリサイズ帯を無効化（カーソル変化/ヒット防止） */
+.sweWindowFrame.docked .sweWindow_resize_top,
+.sweWindowFrame.docked .sweWindow_resize_topRight,
+.sweWindowFrame.docked .sweWindow_resize_right,
+.sweWindowFrame.docked .sweWindow_resize_rightBottom,
+.sweWindowFrame.docked .sweWindow_resize_bottom,
+.sweWindowFrame.docked .sweWindow_resize_bottomLeft,
+.sweWindowFrame.docked .sweWindow_resize_left,
+.sweWindowFrame.docked .sweWindow_resize_leftTop {
+	pointer-events: none;
+	cursor: default !important;
+}
+.sweWindowFrame,
+.sweWindowHeader,
+.sweWindow_resize_top,
+.sweWindow_resize_left,
+.sweWindow_resize_right,
+.sweWindow_resize_bottom {
+	user-select: none;
+}
+.sweWindowMinimizeZone {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: flex-start;
+	align-items: center;
+	width: 100%;
+	z-index: 5;
+	/*
+	background-color: orange;
+	opacity: 0.1;
+*/
+}
+/* アクティブなウィンドウのヘッダーを少しだけ強調 */
+.sweWindowFrame.active>.sweWindowHeader {
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+/* 非アクティブはほんの少しだけ薄く */
+.sweWindowFrame:not(.active)>.sweWindowHeader {
+	opacity: 0.9;
+}
+/* ドラッグ中は枠に点線アウトライン */
+.sweWindowFrame.dragging {
+	outline: 1px dashed rgba(255, 255, 255, 0.4);
+}
+.sweWindowBody {
+	display: flex;
+	flex-direction: column;
+}
+
+// ============================================================
+// Inner Desktop / Dock Overlay
+// ============================================================
+.sweHasInnerDesktop {
+	position: relative;
+	/* inner desktop 全体の描画範囲はウィンドウ内に閉じる */
+	overflow: hidden;
+}
+
+.sweWindow.sweHasInnerDesktop .sweWindowBody {
+	padding: 0;
+}
+
+.sweInnerRoot {
+	position: absolute;
+	inset: 0;
+	pointer-events: auto;
+	// innerRoot は「親ウィンドウの通常コンテンツ」と「dock/子ウィンドウ群」の間に入る土台
+	// - overlayRoot/floatLayer をまとめて管理し、スタック文脈を安定させる
+	// 親ウィンドウの本文（通常コンテンツ）より前面に固定して、dock overlay/tab が潜らないようにする
+	z-index: 10;
+}
+
+.sweDockOverlayRoot {
+	position: absolute;
+	inset: 0;
+	pointer-events: auto;
+	// overlayRoot は dock band / divider / tab / floatLayer を同一の文脈で積むためのルート
+	// - isolation により外部のスタック文脈の影響を受けにくくする
+	/* overlay 全体を1つのスタック文脈に固定し、他要素とのz競合を避ける */
+	isolation: isolate;
+	// 親ウィンドウコンテンツより前面に固定（子要素の z-index が負けないようにする）
+	z-index: 10;
+ }
+ 
+.sweDockOverlayRoot > .sweFloatLayer {
+	/*--------------------------------------------------
+		FloatLayer: 子ウィンドウ（浮動フレーム）の格納レイヤ
+		- inset は dock の占有領域（CSS変数）
+		- overflow は visible（帯領域への重なりをクリップしない）
+	--------------------------------------------------*/
+	// pointer-events は一旦 none にして、実際の frame だけ auto に戻す（クリック抜け/ヒットテスト安定化）
+	position: absolute;
+	inset:
+		var(--sweDockInsetTop, 0px)
+		var(--sweDockInsetRight, 0px)
+		var(--sweDockInsetBottom, 0px)
+		var(--sweDockInsetLeft, 0px);
+	width: auto;
+	height: auto;
+	overflow: visible;
+	pointer-events: none;
+	z-index: var(--sweZOverlayFloatLayer);
+ }
+
+ .sweDockOverlayRoot > .sweFloatLayer > .sweWindowFrame {
+	pointer-events: auto;
+ }
+ 
+.sweDockOverlayRoot > .sweDockBand {
+	/*
+		重要: tab を floatLayer より前面に出すため、band 自体には z-index を付けない。
+		band に z-index を付けると band がスタック文脈になり、子の tab が floatLayer を超えられない。
+		※bandContent/divider 側にのみ z-index を付けて、帯本体は floatLayer より下に保つ。
+	*/
+	// overlay 直下 band のみ特別扱い（!important）
+	// - 下の汎用 .sweDockBand の isolation/z-index が効くと tab が沈むため
+	// 注意: 後段にある汎用 .sweDockBand の z-index/isolation が勝つと、tab が floatLayer を超えられない。
+	// overlay 直下の band だけは確実にスタック文脈を作らないように !important で上書きする。
+	position: absolute !important;
+	pointer-events: auto;
+	z-index: auto !important;
+	isolation: auto !important;
+}
+
+.sweDockOverlayRoot > .sweDockBand > .sweDockBandContent,
+.sweDockOverlayRoot > .sweDockBand > .sweDockDivider {
+	position: relative;
+	// 帯の本文/仕切り線だけは band としての存在感を持たせる（ただし floatLayer の直前まで）
+	z-index: var(--sweZOverlayDockBand);
+}
+
+// hover / front-band: 帯の本文だけを手前に出す（tab は独立して最前面なので band は上げない）
+.sweDockOverlayRoot > .sweDockBand:hover > .sweDockBandContent,
+.sweDockOverlayRoot > .sweDockBand:hover > .sweDockDivider,
+.sweDockOverlayRoot > .sweDockBand.sweDockFrontBand > .sweDockBandContent,
+.sweDockOverlayRoot > .sweDockBand.sweDockFrontBand > .sweDockDivider {
+	// floatLayer より 1 だけ下へ（tab はさらに上）
+	z-index: #{'calc(var(--sweZOverlayFloatLayer) - 1)'};
+}
+
+.sweDockOverlayRoot > .sweDockBand.sweDockShowTab > .sweDockTab,
+.sweDockOverlayRoot > .sweDockBand.autoHide:not(.expanded) > .sweDockTab {
+	/* tab だけを常に最前面へ（band背景より前） */
+	// - autoHide collapsed は常にタブ（矢印）を表示し、そこから展開する
+	// - sweDockShowTab は hover/クリック等の一時表示
+	z-index: var(--sweZOverlayDockTab);
+}
+
+.sweDockOverlayRoot > .sweDockBand[data-side="left"] {
+	left: 0;
+	top: 0;
+	bottom: 0;
+}
+
+.sweDockOverlayRoot > .sweDockBand[data-side="right"] {
+	right: 0;
+	top: 0;
+	bottom: 0;
+}
+
+.sweDockOverlayRoot > .sweDockBand[data-side="top"] {
+	left: 0;
+	right: 0;
+	top: 0;
+}
+
+.sweDockOverlayRoot > .sweDockBand[data-side="bottom"] {
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.sweFloatLayer,
+.sweDockMain,
+.sweDockBandContent {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	pointer-events: auto;
+}
+
+/* When a window is used as a dock-context container, stack child frames in normal flow */
+.sweDockBandContent > .sweWindowFrame {
+	position: relative !important;
+	left: auto !important;
+	top: auto !important;
+	inset: auto !important;
+	// 幅は帯の向きにより決め方が異なる（top/bottom は「横に並べる」ため width:100% を強制しない）
+	height: auto !important;
+	flex: 0 0 auto !important;
+	z-index: 0 !important;
+}
+
+// 左右帯（縦方向帯）: 子ウィンドウは幅いっぱい（縦に積む）
+.sweDockBand[data-side="left"] > .sweDockBandContent > .sweWindowFrame,
+.sweDockBand[data-side="right"] > .sweDockBandContent > .sweWindowFrame {
+	width: 100% !important;
+}
+
+// 上下帯（横方向帯）: 子ウィンドウは高さを合わせ、幅はJSで保持したpx指定を優先
+.sweDockBand[data-side="top"] > .sweDockBandContent > .sweWindowFrame,
+.sweDockBand[data-side="bottom"] > .sweDockBandContent > .sweWindowFrame {
+	height: 100% !important;
+}
+
+.sweDockSplit {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	min-width: 0;
+	min-height: 0;
+	pointer-events: auto;
+	padding: 0;
+	margin: 0;
+}
+
+.sweDockSplit.row {
+	flex-direction: row;
+}
+
+.sweDockSplit.column {
+	flex-direction: column;
+}
+
+.sweDockMain {
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+	background: var(--sweWindow-background-color);
+	position: relative;
+	z-index: 1;
+}
+
+.sweDockDivider {
+	flex: 0 0 auto;
+	background: transparent;
+	outline: none;
+	backdrop-filter: none;
+	pointer-events: auto;
+	touch-action: none;
+	user-select: none;
+	position: relative;
+	z-index: var(--sweZOverlayDockDivider);
+	min-width: 8px;
+	min-height: 8px;
+	align-self: stretch;
+}
+
+/* divider は透明の当たり判定として残し、境界線だけ描画する */
+.sweDockDivider::after {
+	content: "";
+	position: absolute;
+	background: rgba(255, 255, 255, 0.22);
+	pointer-events: none;
+}
+
+/* 境界線は divider の「メイン側の端」に寄せる（タブは線の外側=帯側） */
+
+.sweDockBand:not(.sweDockFrontBand)[data-side="left"] > .sweDockDivider::after,
+.sweDockBand:not(.sweDockFrontBand)[data-side="right"] > .sweDockDivider::after {
+	// 左右帯の縦線は常に全高で描画する
+	top: 0;
+	bottom: 0;
+	width: 1px;
+	left: 50%;
+	transform: translateX(-0.5px);
+}
+
+.sweDockBand.sweDockFrontBand[data-side="left"] > .sweDockDivider::after,
+.sweDockBand.sweDockFrontBand[data-side="right"] > .sweDockDivider::after {
+	top: 0;
+	bottom: 0;
+	width: 1px;
+	left: 50%;
+	transform: translateX(-0.5px);
+}
+
+.sweDockBand[data-side="left"] > .sweDockDivider::after {
+	/* left: content|divider|tab なので線は tab 側 */
+	left: 50%;
+	right: auto;
+}
+
+.sweDockBand[data-side="right"] > .sweDockDivider::after {
+	/* right: tab|divider|content なので線は tab 側 */
+	left: 50%;
+	right: auto;
+}
+
+
+.sweDockBand:not(.sweDockFrontBand)[data-side="top"] > .sweDockDivider::after,
+.sweDockBand:not(.sweDockFrontBand)[data-side="bottom"] > .sweDockDivider::after {
+	left: clamp(0px, #{'calc(var(--sweDockInsetLeft, 0px) - 1px)'}, 9999px);
+	right: clamp(0px, #{'calc(var(--sweDockInsetRight, 0px) - 1px)'}, 9999px);
+	height: 1px;
+	top: 50%;
+	transform: translateY(-0.5px);
+}
+
+.sweDockBand.sweDockFrontBand[data-side="top"] > .sweDockDivider::after,
+.sweDockBand.sweDockFrontBand[data-side="bottom"] > .sweDockDivider::after {
+	left: 0;
+	right: 0;
+	height: 1px;
+	top: 50%;
+	transform: translateY(-0.5px);
+}
+
+.sweDockBand[data-side="top"] > .sweDockDivider::after {
+	/* top: content|divider|tab なので線は tab 側 */
+	bottom: auto;
+}
+
+.sweDockBand[data-side="bottom"] > .sweDockDivider::after {
+	/* bottom: tab|divider|content なので線は tab 側 */
+	top: 50%;
+}
+
+.sweDockBand[data-side="left"] > .sweDockDivider,
+.sweDockBand[data-side="right"] > .sweDockDivider {
+	width: 8px;
+	height: 100%;
+	cursor: col-resize;
+}
+
+// 左右帯: リサイズゾーンを「メインと帯の境界（エッジ）」に被せる
+.sweDockBand[data-side="left"] > .sweDockDivider {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	// 境界へ被せる（半分だけメイン側へ）
+	right: -4px;
+	height: auto;
+}
+
+.sweDockBand[data-side="right"] > .sweDockDivider {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: -4px;
+	height: auto;
+}
+
+.sweDockBand[data-side="top"] > .sweDockDivider,
+.sweDockBand[data-side="bottom"] > .sweDockDivider {
+	height: 8px;
+	width: 100%;
+	cursor: row-resize;
+}
+
+.sweDockBand {
+	flex: 0 0 auto;
+	display: flex;
+	background: transparent;
+	border: none;
+	border-radius: 0;
+	overflow: visible;
+	min-width: 0;
+	min-height: 0;
+	pointer-events: auto;
+	padding: 0;
+	margin: 0;
+	position: relative;
+	isolation: isolate;
+	z-index: 2;
+}
+
+.sweDockBand:hover {
+	z-index: 20;
+}
+
+.sweDockBandContent {
+	background: var(--sweWindow-background-color);
+	position: relative;
+	z-index: 0;
+}
+
+.sweDockBand[data-side="left"],
+.sweDockBand[data-side="right"] {
+	width: 260px;
+	flex-direction: row;
+	height: 100%;
+	align-items: stretch;
+}
+
+.sweDockBand[data-side="top"],
+.sweDockBand[data-side="bottom"] {
+	height: 200px;
+	flex-direction: column;
+	width: 100%;
+	align-items: flex-start;
+}
+
+.sweDockTab {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: absolute;
+	z-index: var(--sweZOverlayDockTab);
+	background: rgb(20, 20, 20);
+	color: rgba(255, 255, 255, 0.9);
+	font-size: 12px;
+	user-select: none;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	pointer-events: auto;
+	margin: 0;
+	transition:
+		background-color 120ms ease,
+		opacity 120ms ease;
+	cursor: pointer;
+}
+
+/* Place the tab on the inner edge so it overlays without taking layout space */
+.sweDockBand[data-side="left"] > .sweDockTab {
+	// left/right のタブは内側へ食い込ませるが、表示上 2px 右へズレるため微調整する
+	right: calc(-1 * var(--dock-tab-size) - 6px);
+	top: 0;
+	bottom: 0;
+}
+
+.sweDockBand[data-side="right"] > .sweDockTab {
+	// 右帯は 2px 左へ補正
+	left: calc(-1 * var(--dock-tab-size) - 6px);
+	top: 0;
+	bottom: 0;
+}
+
+.sweDockBand[data-side="top"] > .sweDockTab {
+	left: 10px;
+	bottom: calc(-1 * var(--dock-tab-size));
+	width: fit-content;
+	max-width: calc(100% - 20px);
+}
+
+.sweDockBand[data-side="bottom"] > .sweDockTab {
+	left: 10px;
+	top: calc(-1 * var(--dock-tab-size));
+	width: fit-content;
+	max-width: calc(100% - 20px);
+}
+
+/* Tab visibility policy:
+   - autoHide collapsed: show a single small arrow-only tab
+   - autoHide expanded OR non-autoHide: hide tab by default, show on band hover */
+	// 方針:
+	// - collapsed 時は「矢印だけ」の小さなタブを残して発見性を確保
+	// - expanded/通常時は邪魔なのでデフォルト非表示、必要な時だけ hover などで表示
+.sweDockBand:not(.autoHide) > .sweDockTab,
+.sweDockBand.autoHide.expanded > .sweDockTab {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.sweDockBand.sweDockShowTab > .sweDockTab {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.sweDockBand:not(.autoHide):hover > .sweDockTab,
+.sweDockBand.autoHide.expanded:hover > .sweDockTab {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockTab {
+	opacity: 0.3;
+	pointer-events: auto;
+	justify-content: center;
+	padding: 0;
+	gap: 0;
+	font-size: 0;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockTab > .sweDockTabItem {
+	display: none;
+}
+
+.sweDockBand.autoHide:not(.expanded):not(.sweDockCollapsing) > .sweDockTab::before {
+	content: "";
+	display: block;
+	width: 8px;
+	height: 16px;
+	opacity: 1;
+	background: rgba(255, 255, 255, 0.95);
+	clip-path: polygon(0 0, 100% 50%, 0 100%);
+	transform-origin: center;
+}
+
+.sweDockBand.autoHide:not(.expanded):not(.sweDockCollapsing)[data-side="left"] > .sweDockTab::before {
+	transform: none;
+}
+
+.sweDockBand.autoHide:not(.expanded):not(.sweDockCollapsing)[data-side="right"] > .sweDockTab::before {
+	transform: rotate(180deg);
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="top"] > .sweDockTab,
+.sweDockBand.autoHide:not(.expanded)[data-side="bottom"] > .sweDockTab {
+	height: calc(var(--dock-tab-size) - 2px);
+	padding-left: 15px;
+	padding-right: 15px;
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="top"] > .sweDockTab {
+	bottom: -2px;
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="bottom"] > .sweDockTab {
+	top: -2px;
+}
+
+.sweDockBand.autoHide:not(.expanded):not(.sweDockCollapsing)[data-side="top"] > .sweDockTab::before {
+	transform: rotate(90deg);
+}
+
+.sweDockBand.autoHide:not(.expanded):not(.sweDockCollapsing)[data-side="bottom"] > .sweDockTab::before {
+	transform: rotate(-90deg);
+}
+
+.sweDockTabItem {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 2px 6px;
+	border-radius: 4px;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.sweDockTab.stacked {
+	gap: 6px;
+}
+
+.sweDockTabItem.active {
+	background: rgb(155, 0, 0);
+	color: rgba(255, 255, 255, 1);
+}
+
+.sweDockBand[data-side="left"] > .sweDockTab,
+.sweDockBand[data-side="right"] > .sweDockTab {
+	width: var(--dock-tab-size);
+	flex: 0 0 var(--dock-tab-size);
+	align-self: flex-start;
+	height: auto;
+	max-height: 100%;
+	padding: 6px 3px;
+	font-size: 11px;
+	flex-direction: column;
+	justify-content: flex-start;
+	gap: 4px;
+	writing-mode: vertical-rl;
+	text-orientation: mixed;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: normal;
+}
+
+.sweDockBand[data-side="left"] > .sweDockTab.stacked,
+.sweDockBand[data-side="right"] > .sweDockTab.stacked {
+	writing-mode: horizontal-tb;
+	text-orientation: mixed;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.sweDockBand[data-side="left"] > .sweDockTab > .sweDockTabItem,
+.sweDockBand[data-side="right"] > .sweDockTab > .sweDockTabItem {
+	writing-mode: vertical-rl;
+	text-orientation: mixed;
+}
+
+.sweDockBand[data-side="top"] > .sweDockTab,
+.sweDockBand[data-side="bottom"] > .sweDockTab {
+	height: var(--dock-tab-size);
+	flex: 0 0 var(--dock-tab-size);
+	align-self: flex-start;
+	padding: 3px 8px;
+	font-size: 11px;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: flex-start;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="left"] > .sweDockTab {
+	// autoHide collapsed（左右）: 画面端の中央に「矢印だけ」のタブを固定して出す
+	left: 0;
+	right: auto;
+	top: 50%;
+	bottom: auto;
+	transform: translateY(-50%);
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="right"] > .sweDockTab {
+	right: 0;
+	left: auto;
+	top: 50%;
+	bottom: auto;
+	transform: translateY(-50%);
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="left"] > .sweDockTab,
+.sweDockBand.autoHide:not(.expanded)[data-side="right"] > .sweDockTab {
+	width: 15px;
+	min-height: 40px;
+	padding: 0;
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="top"] > .sweDockTab {
+	// autoHide collapsed（上下）: 端の中央にタブを寄せて配置
+	left: 50%;
+	right: auto;
+	bottom: inherit;
+	transform: translateX(-50%);
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="bottom"] > .sweDockTab {
+	left: 50%;
+	right: auto;
+	top: inherit;
+	bottom: 0;
+	transform: translateX(-50%);
+}
+
+.sweDockBandContent {
+	// 帯の本文領域（docked window を格納するスクロールコンテナ）
+	// - 左右帯: 縦スクロール
+	// - 上下帯: 横スクロール（子は横に並ぶ）
+	flex: 1 1 auto;
+	align-self: stretch;
+	inline-size: 100%;
+	block-size: 100%;
+	background: rgba(0, 0, 0, 0.18);
+	border: none;
+	border-radius: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	overflow: auto;
+	overscroll-behavior-x: none;
+	overscroll-behavior-y: contain;
+	scrollbar-gutter: stable;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+	min-width: 0;
+	min-height: 0;
+	position: relative;
+	z-index: 1;
+}
+
+
+.sweDockBandContent > .sweWindowFrame {
+	position: relative !important;
+	left: auto !important;
+	top: auto !important;
+	right: auto !important;
+	bottom: auto !important;
+	inset: auto !important;
+	transform: none !important;
+	flex: 0 0 auto !important;
+	margin: 0 !important;
+	align-self: stretch !important;
+	transition: none !important;
+}
+
+.sweDockBand[data-side="top"] > .sweDockBandContent,
+.sweDockBand[data-side="bottom"] > .sweDockBandContent {
+	// 上下帯は横方向に並べてスクロールさせる
+	flex-direction: row;
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+.sweDockBand[data-side="left"] > .sweDockBandContent,
+.sweDockBand[data-side="right"] > .sweDockBandContent {
+	// 左右帯は縦方向に積み、縦スクロール
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+.sweDockBand[data-side="top"] .sweWindowFrame.sweChildInDockBand,
+.sweDockBand[data-side="bottom"] .sweWindowFrame.sweChildInDockBand {
+	border-top: none;
+	border-left: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.sweDockBandContent > .sweWindowFrame.docked {
+	position: relative;
+	inset: auto;
+}
+
+.sweDockBandContent::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+
+/* Dock band scrolls as a whole (not per subwindow):
+   clip each docked window's contents to avoid visual overlap between blocks */
+.sweDockBandContent .sweWindowFrame.docked {
+	overflow: hidden;
+}
+
+.sweDockBandContent .sweWindow {
+	overflow: auto;
+	height: 100%;
+}
+
+.sweDockBandContent * {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.sweDockBandContent *::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockBandContent {
+	// collapsed 中は本文を非表示（タブだけ残す）
+	display: none;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockDivider {
+	// collapsed 中は divider も非表示
+	display: none;
+}
+
+.sweDockBand.expanded > .sweDockBandContent {
+	// expanded 中は本文を強制表示（autoHide でも見えるように）
+	display: flex !important;
+}
+
+.sweDockBand.expanded > .sweDockDivider {
+	// expanded 中は divider を表示
+	display: block !important;
+}
+
+.sweDockBand.autoHide.sweDockResizing > .sweDockBandContent {
+	display: flex !important;
+}
+
+.sweDockBand.autoHide.sweDockResizing > .sweDockDivider {
+	display: block !important;
+}
+
+.sweDockBand.autoHide.sweDockAutoHideResizing > .sweDockBandContent {
+	display: flex !important;
+}
+
+.sweDockBand.autoHide.sweDockAutoHideResizing > .sweDockDivider {
+	display: block !important;
+}
+
+.sweDockBand.autoHide.sweDockCollapsing > .sweDockBandContent {
+	display: flex !important;
+}
+
+.sweDockBand.autoHide.sweDockCollapsing > .sweDockDivider {
+	display: block !important;
+}
+
+.sweDockBand.autoHide.sweDockCollapsing > .sweDockTab::before {
+	content: none !important;
+	opacity: 0;
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="left"],
+.sweDockBand.autoHide:not(.expanded)[data-side="right"] {
+	// collapsed（左右）: band 本体の幅をタブ幅に圧縮
+	width: 15px;
+	// band 本体は pointer-events を止めて、タブだけが反応するようにする
+	pointer-events: none;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockTab {
+	// collapsed 中でもタブだけはクリックできる
+	pointer-events: auto;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockDivider {
+	pointer-events: none;
+}
+
+.sweDockBand.autoHide:not(.expanded)[data-side="top"],
+.sweDockBand.autoHide:not(.expanded)[data-side="bottom"] {
+	// collapsed（上下）: band 本体の高さをタブ高さに圧縮
+	height: var(--dock-tab-size);
+	// band 本体は pointer-events を止めて、タブだけが反応するようにする
+	pointer-events: none;
+}
+
+.sweDockBand.autoHide {
+	/* autoHide expand/collapse animation speed (tweak here) */
+	// autoHide の expand/collapse は width/height の transition で表現する
+	transition: width 260ms ease, height 260ms ease;
+}
+
+.sweDockBand.autoHide.sweDockAnimating {
+	// アニメ中に帯本文が見切れないよう、帯の本文/仕切り線の z を安定させる
+	z-index: var(--sweZOverlayDockBand);
+}
+
+.sweDockBand.autoHide.sweDockResizing,
+.sweDockBand.autoHide.sweDockAutoHideResizing {
+	// リサイズ中は transition を切って追従を優先
+	transition: none;
+}
+
+.sweDockBand.autoHide[data-side="left"]:hover,
+.sweDockBand.autoHide[data-side="right"]:hover,
+.sweDockBand.autoHide[data-side="top"]:hover,
+.sweDockBand.autoHide[data-side="bottom"]:hover {
+	outline: none;
+}
+
+.sweDockBand.autoHide:hover > .sweDockTab {
+	background: rgb(20, 20, 20);
+}
+
+.sweDockBand.autoHide:not(.expanded):hover > .sweDockTab {
+	background: rgb(20, 20, 20);
+	color: rgba(255, 255, 255, 1);
+	box-shadow: none;
+}
+.sweDockBand.autoHide > .sweDockTab:hover {
+	background: rgb(120, 0, 0);
+	color: rgba(255, 255, 255, 1);
+	box-shadow:
+		inset 0 0 0 1px rgba(255, 80, 80, 0.32),
+		0 0 8px rgba(255, 40, 40, 0.18);
+}
+
+/* autoHide + stacked: do not highlight the whole strip on hover */
+.sweDockBand.autoHide > .sweDockTab.stacked:hover {
+	background: rgb(20, 20, 20);
+	color: rgba(255, 255, 255, 0.9);
+	box-shadow: none;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockTab:hover {
+	background: rgb(120, 0, 0);
+	color: rgba(255, 255, 255, 1);
+	box-shadow: none;
+}
+
+.sweDockBand.autoHide:not(.expanded) > .sweDockTab.stacked:hover {
+	background: rgb(20, 20, 20);
+	color: rgba(255, 255, 255, 1);
+	box-shadow: none;
+}
+
+.sweDockTab.stacked:hover {
+	background: rgb(20, 20, 20);
+	color: rgba(255, 255, 255, 0.9);
+	box-shadow: none;
+}
+
+.sweDockTabItem:hover {
+	background: rgb(120, 0, 0);
+	color: rgba(255, 255, 255, 1);
+	box-shadow:
+		inset 0 0 0 1px rgba(255, 255, 255, 0.65),
+		0 0 8px rgba(255, 40, 40, 0.18);
+}
+
+.sweDockTab:hover {
+	background: rgb(120, 0, 0);
+	color: rgba(255, 255, 255, 1);
+	box-shadow:
+		inset 0 0 0 1px rgba(255, 255, 255, 0.55),
+		0 0 8px rgba(255, 40, 40, 0.18);
+}
+
+.sweDockTab:active {
+	background: rgb(155, 0, 0);
+}
+
+.sweWindowBody {
+	padding: 12px 16px;
+	line-height: 1.6;
+}
+
+.sweHasInnerDesktop > .sweWindowBody {
+	padding: 0 !important;
+}
+
+.sweWindow.sweHasInnerDesktop .sweWindowBody {
+	padding: 0 !important;
+}
+
+/*
+Copyright (c) 2025 scripcrypt
+Licensed under the MIT License.
+You may obtain a copy of the License at:
+https://opensource.org/licenses/MIT
+*/
